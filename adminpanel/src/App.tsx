@@ -5,7 +5,9 @@ import { Users } from './pages/Users'
 import { Reports } from './pages/Reports'
 import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
+import { AdminUsers } from './pages/AdminUsers'
 import { Layout } from './components/Layout'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Toaster } from 'sonner'
 
@@ -22,6 +24,14 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="sessions" element={<Sessions />} />
             <Route path="profile" element={<Profile />} />
+            <Route
+              path="admin-users"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Routes>
       </Router>
