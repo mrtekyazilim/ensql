@@ -15,7 +15,7 @@ export function Layout() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     setIsAuthenticated(!!token)
-    
+
     if (token) {
       loadCurrentUser()
     } else {
@@ -29,7 +29,7 @@ export function Layout() {
       const response = await axios.get('http://localhost:13201/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      
+
       if (response.data.success) {
         setCurrentUser(response.data.user)
       }

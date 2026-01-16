@@ -105,11 +105,10 @@ export function AdminUsers() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin'
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin'
                           ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
                           : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                      }`}
+                        }`}
                     >
                       {user.role === 'admin' ? 'Admin' : 'Kullanıcı'}
                     </span>
