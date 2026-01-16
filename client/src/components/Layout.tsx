@@ -1,6 +1,7 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from './ThemeToggle'
+import { Copyright } from './Copyright'
 
 export function Layout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -49,6 +50,12 @@ export function Layout() {
                 >
                   Ayarlar
                 </a>
+                <a
+                  href="/sessions"
+                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  Oturumlar
+                </a>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -70,6 +77,10 @@ export function Layout() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Outlet />
       </main>
+
+      <footer className="mt-auto border-t border-gray-200 dark:border-gray-700">
+        <Copyright />
+      </footer>
     </div>
   )
 }

@@ -79,6 +79,29 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 - Responsive tasarım (mobile-first)
 - **Dark/Light Mode:** Her iki projede de dark mode desteği (localStorage ile kalıcı)
 
+#### Dark Mode Kuralları (ÖNEMLİ!)
+
+**Her yeni component, page, modal veya UI elementi oluştururken MUTLAKA dark mode sınıflarını ekle:**
+
+- **Arka Planlar:** `bg-white dark:bg-gray-800`, `bg-gray-50 dark:bg-gray-900`
+- **Metinler:** `text-gray-900 dark:text-white`, `text-gray-600 dark:text-gray-400`
+- **Kenarlıklar:** `border-gray-300 dark:border-gray-600`, `border-gray-200 dark:border-gray-700`
+- **Input Alanları:** `bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600`
+- **Placeholder:** `placeholder-gray-500 dark:placeholder-gray-400`
+- **Modal/Dialog:** `bg-white dark:bg-gray-800` (içerik), `bg-gray-50 dark:bg-gray-700` (footer)
+- **Kartlar:** Gradient kullanırken dark: versiyonlarını ekle: `from-blue-500 dark:from-blue-600`
+- **Hover Durumları:** `hover:bg-gray-100 dark:hover:bg-gray-700`
+
+**Default Theme:** App.tsx'de `defaultTheme="dark"` olarak ayarlanmıştır.
+
+**Test Kontrol Listesi:**
+
+- [ ] Yeni component/page oluşturulduğunda dark mode'da test et
+- [ ] Beyaz arka plan görüyorsan `dark:bg-gray-800/900` ekle
+- [ ] Siyah metin görünmüyorsa `dark:text-white` ekle
+- [ ] Modal/Dialog açılırken içerik ve footer'ı kontrol et
+- [ ] Input alanları placeholder ve border renklerini kontrol et
+
 ### Kod Standartları
 
 - Türkçe yorum ve değişken isimleri kullanılabilir

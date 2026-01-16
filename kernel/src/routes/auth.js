@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Session = require('../models/Session');
 const jwt = require('jsonwebtoken');
+const { protect } = require('../middleware/auth');
 
 // Admin Login
 router.post('/admin/login', async (req, res) => {
@@ -33,6 +35,25 @@ router.post('/admin/login', async (req, res) => {
         success: false,
         message: 'Geçersiz kullanıcı adı veya şifre'
       });
+    }
+
+    // Session kaydı oluştur
+    const { deviceId, deviceName, browserInfo } = req.body;
+    if (deviceId) {
+      await Session.findOneAndUpdate(
+        { userId: user._id, deviceId },
+        {
+          userId: user._id,
+          userType: 'admin',
+          deviceId,
+          deviceName: deviceName || 'Bilinmeyen Cihaz',
+          browserInfo: browserInfo || req.headers['user-agent'],
+          ipAddress: req.ip || req.connection.remoteAddress,
+          lastActivity: new Date(),
+          aktif: true
+        },
+        { upsert: true, new: true }
+      );
     }
 
     // JWT token oluştur
@@ -112,6 +133,25 @@ router.post('/client/login', async (req, res) => {
     user.kullanimIstatistikleri.sonGirisTarihi = new Date();
     await user.save();
 
+    // Session kaydı oluştur
+    const { deviceId, deviceName, browserInfo } = req.body;
+    if (deviceId) {
+      await Session.findOneAndUpdate(
+        { userId: user._id, deviceId },
+        {
+          userId: user._id,
+          userType: 'client',
+          deviceId,
+          deviceName: deviceName || 'Bilinmeyen Cihaz',
+          browserInfo: browserInfo || req.headers['user-agent'],
+          ipAddress: req.ip || req.connection.remoteAddress,
+          lastActivity: new Date(),
+          aktif: true
+        },
+        { upsert: true, new: true }
+      );
+    }
+
     // JWT token oluştur
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -173,6 +213,61 @@ router.get('/me', async (req, res) => {
     res.status(401).json({
       success: false,
       message: 'Yetkisiz erişim'
+    });
+  }
+});
+
+// Şifre değiştir
+router.put('/change-password', protect, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mevcut şifre ve yeni şifre gereklidir'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Yeni şifre en az 6 karakter olmalıdır'
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      });
+    }
+
+    // Mevcut şifre kontrolü
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Mevcut şifre yanlış'
+      });
+    }
+
+    // Yeni şifreyi kaydet (model'de otomatik hash'lenir)
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Şifre başarıyla değiştirildi'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
     });
   }
 });

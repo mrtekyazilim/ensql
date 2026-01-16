@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { toast } from 'sonner'
 
 interface Report {
   _id: string
@@ -52,11 +53,11 @@ export function Reports() {
       )
 
       if (response.data.success) {
-        alert('Rapor başarıyla çalıştırıldı')
+        toast.success('Rapor başarıyla çalıştırıldı')
         loadReports()
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Rapor çalıştırılamadı')
+      toast.error(error.response?.data?.message || 'Rapor çalıştırılamadı')
     }
   }
 

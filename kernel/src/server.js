@@ -25,6 +25,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/connector', require('./routes/connector'));
+app.use('/api/sessions', require('./routes/sessions'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

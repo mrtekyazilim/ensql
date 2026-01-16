@@ -3,8 +3,10 @@ import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
+import { Sessions } from './pages/Sessions'
 import { Layout } from './components/Layout'
 import { ThemeProvider } from './components/ThemeProvider'
+import { Toaster } from 'sonner'
 
 function App() {
   return (
@@ -17,9 +19,11 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="sessions" element={<Sessions />} />
           </Route>
         </Routes>
       </Router>
+      <Toaster position="top-right" richColors />
     </ThemeProvider>
   )
 }

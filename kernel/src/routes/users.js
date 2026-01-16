@@ -61,12 +61,12 @@ router.get('/:id', protect, async (req, res) => {
 // Yeni kullanıcı oluştur (admin only)
 router.post('/', protect, adminOnly, async (req, res) => {
   try {
-    const { username, password, clientId, clientPassword, hizmetBitisTarihi, sqlServerConfig } = req.body;
+    const { companyName, username, password, hizmetBitisTarihi, sqlServerConfig } = req.body;
 
-    if (!username || !password || !clientId || !clientPassword || !hizmetBitisTarihi) {
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Zorunlu alanları doldurun'
+        message: 'Kullanıcı adı ve şifre gereklidir'
       });
     }
 
@@ -79,13 +79,18 @@ router.post('/', protect, adminOnly, async (req, res) => {
       });
     }
 
-    // ClientId kontrolü
-    const existingClientId = await User.findOne({ clientId });
-    if (existingClientId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Bu clientId zaten kullanılıyor'
-      });
+    // ClientId otomatik oluştur (UUID)
+    const { randomUUID } = require('crypto');
+    const clientId = randomUUID();
+    const clientPassword = randomUUID(); // Otomatik güvenli şifre
+
+    // Hizmet bitiş tarihi: gönderilmişse kullan, yoksa 2 ay sonrası
+    let bitisTarihi;
+    if (hizmetBitisTarihi) {
+      bitisTarihi = new Date(hizmetBitisTarihi);
+    } else {
+      bitisTarihi = new Date();
+      bitisTarihi.setMonth(bitisTarihi.getMonth() + 2);
     }
 
     // ClientPassword hash'le
@@ -93,12 +98,13 @@ router.post('/', protect, adminOnly, async (req, res) => {
     const hashedClientPassword = await bcrypt.hash(clientPassword, salt);
 
     const user = await User.create({
+      companyName,
       username,
       password, // Model'de otomatik hash'lenir
       role: 'client',
       clientId,
       clientPassword: hashedClientPassword,
-      hizmetBitisTarihi,
+      hizmetBitisTarihi: bitisTarihi,
       sqlServerConfig,
       aktif: true
     });
@@ -107,8 +113,10 @@ router.post('/', protect, adminOnly, async (req, res) => {
       success: true,
       user: {
         id: user._id,
+        companyName: user.companyName,
         username: user.username,
         clientId: user.clientId,
+        clientPassword: clientPassword, // Sadece bu seferlik düz metin olarak dön (kaydetsin diye)
         hizmetBitisTarihi: user.hizmetBitisTarihi,
         aktif: user.aktif
       }
@@ -122,18 +130,10 @@ router.post('/', protect, adminOnly, async (req, res) => {
   }
 });
 
-// Kullanıcı güncelle
-router.put('/:id', protect, async (req, res) => {
+// Kullanıcı güncelle (admin only)
+router.put('/:id', protect, adminOnly, async (req, res) => {
   try {
-    const { password, clientPassword, hizmetBitisTarihi, sqlServerConfig, aktif } = req.body;
-
-    // Admin değilse sadece kendi bilgilerini güncelleyebilir
-    if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bu işlem için yetkiniz yok'
-      });
-    }
+    const { companyName, username, password, hizmetBitisTarihi, sqlServerConfig, aktif } = req.body;
 
     const user = await User.findById(req.params.id);
 
@@ -144,26 +144,13 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    // Şifre güncelleme
-    if (password) {
-      user.password = password;
-    }
-
-    // ClientPassword güncelleme
-    if (clientPassword) {
-      const salt = await bcrypt.genSalt(10);
-      user.clientPassword = await bcrypt.hash(clientPassword, salt);
-    }
-
-    // Diğer alanlar (sadece admin güncelleyebilir)
-    if (req.user.role === 'admin') {
-      if (hizmetBitisTarihi) user.hizmetBitisTarihi = hizmetBitisTarihi;
-      if (aktif !== undefined) user.aktif = aktif;
-    }
-
-    if (sqlServerConfig) {
-      user.sqlServerConfig = sqlServerConfig;
-    }
+    // Güncellenebilir alanlar
+    if (companyName !== undefined) user.companyName = companyName;
+    if (username) user.username = username;
+    if (password) user.password = password; // Model'de otomatik hash'lenir
+    if (hizmetBitisTarihi) user.hizmetBitisTarihi = hizmetBitisTarihi;
+    if (sqlServerConfig) user.sqlServerConfig = sqlServerConfig;
+    if (typeof aktif !== 'undefined') user.aktif = aktif;
 
     await user.save();
 
@@ -171,7 +158,9 @@ router.put('/:id', protect, async (req, res) => {
       success: true,
       user: {
         id: user._id,
+        companyName: user.companyName,
         username: user.username,
+        clientId: user.clientId,
         hizmetBitisTarihi: user.hizmetBitisTarihi,
         aktif: user.aktif
       }

@@ -14,15 +14,44 @@ export function Login() {
 
   const from = (location.state as any)?.from?.pathname || '/dashboard'
 
+  // DeviceId oluştur veya al
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem('deviceId')
+    if (!deviceId) {
+      deviceId = crypto.randomUUID()
+      localStorage.setItem('deviceId', deviceId)
+    }
+    return deviceId
+  }
+
+  const getBrowserInfo = () => {
+    const ua = navigator.userAgent
+    let browserName = 'Bilinmeyen'
+
+    if (ua.indexOf('Chrome') > -1) browserName = 'Chrome'
+    else if (ua.indexOf('Safari') > -1) browserName = 'Safari'
+    else if (ua.indexOf('Firefox') > -1) browserName = 'Firefox'
+    else if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) browserName = 'Internet Explorer'
+    else if (ua.indexOf('Edge') > -1) browserName = 'Edge'
+
+    return `${browserName} - ${navigator.platform}`
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
+      const deviceId = getDeviceId()
+      const browserInfo = getBrowserInfo()
+
       const response = await axios.post('http://localhost:13201/api/auth/admin/login', {
         username,
-        password
+        password,
+        deviceId,
+        deviceName: browserInfo,
+        browserInfo
       })
 
       if (response.data.success) {
