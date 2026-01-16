@@ -83,16 +83,43 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 
 **Her yeni component, page, modal veya UI elementi oluştururken MUTLAKA dark mode sınıflarını ekle:**
 
-- **Arka Planlar:** `bg-white dark:bg-gray-800`, `bg-gray-50 dark:bg-gray-900`
-- **Metinler:** `text-gray-900 dark:text-white`, `text-gray-600 dark:text-gray-400`
-- **Kenarlıklar:** `border-gray-300 dark:border-gray-600`, `border-gray-200 dark:border-gray-700`
-- **Input Alanları:** `bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600`
-- **Placeholder:** `placeholder-gray-500 dark:placeholder-gray-400`
-- **Modal/Dialog:** `bg-white dark:bg-gray-800` (içerik), `bg-gray-50 dark:bg-gray-700` (footer)
-- **Kartlar:** Gradient kullanırken dark: versiyonlarını ekle: `from-blue-500 dark:from-blue-600`
-- **Hover Durumları:** `hover:bg-gray-100 dark:hover:bg-gray-700`
+**ZORUNLU Dark Mode Class'ları:**
+
+- **Arka Planlar:**
+  - Sayfa/Container: `bg-white dark:bg-gray-800`
+  - İkincil alan: `bg-gray-50 dark:bg-gray-900`
+  - Hover: `hover:bg-gray-100 dark:hover:bg-gray-700`
+- **Metinler:**
+  - Ana başlık: `text-gray-900 dark:text-white`
+  - Alt başlık/açıklama: `text-gray-600 dark:text-gray-400`
+  - Disabled/pasif: `text-gray-500 dark:text-gray-400`
+- **Kenarlıklar:**
+  - Normal: `border-gray-300 dark:border-gray-600`
+  - İnce: `border-gray-200 dark:border-gray-700`
+  - Ayraç: `divide-gray-200 dark:divide-gray-700`
+- **Input Alanları (TÜM input, textarea, select):**
+  - `bg-white dark:bg-gray-700`
+  - `text-gray-900 dark:text-white`
+  - `border-gray-300 dark:border-gray-600`
+  - `placeholder-gray-500 dark:placeholder-gray-400`
+  - Label: `text-gray-700 dark:text-gray-300`
+- **Modal/Dialog:**
+  - İçerik: `bg-white dark:bg-gray-800`
+  - Overlay: `bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80`
+  - Footer: `bg-gray-50 dark:bg-gray-700`
+- **Kartlar/Listeler:**
+  - Kart: `bg-white dark:bg-gray-800`
+  - Liste öğesi hover: `hover:bg-gray-50 dark:hover:bg-gray-700`
+  - Gradient: `from-blue-500 dark:from-blue-600 to-indigo-700 dark:to-indigo-950`
+- **Butonlar:**
+  - Outline: `bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600`
+  - Primary: `bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600`
+- **Linkler:**
+  - `text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300`
 
 **Default Theme:** App.tsx'de `defaultTheme="dark"` olarak ayarlanmıştır.
+
+**UYARI:** Yeni bir component/page/modal oluştururken dark mode class'larını UNUTMA! Her beyaz arka plan dark:bg-gray-800, her siyah metin dark:text-white olmalı!
 
 **Test Kontrol Listesi:**
 
@@ -101,6 +128,8 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 - [ ] Siyah metin görünmüyorsa `dark:text-white` ekle
 - [ ] Modal/Dialog açılırken içerik ve footer'ı kontrol et
 - [ ] Input alanları placeholder ve border renklerini kontrol et
+- [ ] Liste hover durumları düzgün çalışıyor mu kontrol et
+- [ ] Gradient renkler dark mode'da görünüyor mu kontrol et
 
 ### Kod Standartları
 

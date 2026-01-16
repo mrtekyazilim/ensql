@@ -98,36 +98,39 @@ export function Settings() {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Ayarlar</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ayarlar</h2>
 
       <form onSubmit={handleSaveSettings} className="space-y-6">
         {message && (
-          <div className={`rounded-md p-4 ${message.includes('başarı') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+          <div className={`rounded-md p-4 ${message.includes('başarı')
+              ? 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+              : 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+            }`}>
             <div className="text-sm">{message}</div>
           </div>
         )}
 
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
               Connector Bilgileri
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Client ID</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Client ID</label>
                 <input
                   type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:text-sm"
                   value={connectorConfig.clientId}
                   disabled
                 />
-                <p className="mt-1 text-xs text-gray-500">Client ID değiştirilemez</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Client ID değiştirilemez</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Client Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Password</label>
                 <input
                   type="password"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   value={connectorConfig.clientPassword}
                   onChange={(e) => setConnectorConfig({ ...connectorConfig, clientPassword: e.target.value })}
                   placeholder="Değiştirmek için yeni şifre girin"
@@ -137,27 +140,27 @@ export function Settings() {
           </div>
         </div>
 
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
               SQL Server Bağlantı Bilgileri
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Server</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Server</label>
                 <input
                   type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   value={sqlConfig.server}
                   onChange={(e) => setSqlConfig({ ...sqlConfig, server: e.target.value })}
                   placeholder="localhost veya IP adresi"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Database</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Database</label>
                 <input
                   type="text"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   value={sqlConfig.database}
                   onChange={(e) => setSqlConfig({ ...sqlConfig, database: e.target.value })}
                   placeholder="Veritabanı adı"
@@ -165,20 +168,20 @@ export function Settings() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">User</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">User</label>
                   <input
                     type="text"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={sqlConfig.user}
                     onChange={(e) => setSqlConfig({ ...sqlConfig, user: e.target.value })}
                     placeholder="SQL kullanıcı adı"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                   <input
                     type="password"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     value={sqlConfig.password}
                     onChange={(e) => setSqlConfig({ ...sqlConfig, password: e.target.value })}
                     placeholder="SQL şifresi"
@@ -186,10 +189,10 @@ export function Settings() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Port</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Port</label>
                 <input
                   type="number"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   value={sqlConfig.port}
                   onChange={(e) => setSqlConfig({ ...sqlConfig, port: parseInt(e.target.value) })}
                 />

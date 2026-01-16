@@ -128,9 +128,45 @@ export function Users() {
     }
   }
 
-  const handleConnectToClient = (clientId: string) => {
-    // Client uygulamasına admin olarak bağlan
-    window.open(`http://localhost:13203?admin=${clientId}`, '_blank')
+  const handleConnectToClient = async (clientId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const deviceId = localStorage.getItem('deviceId') || crypto.randomUUID()
+
+      const getBrowserInfo = () => {
+        const ua = navigator.userAgent
+        let browserName = 'Bilinmeyen'
+        if (ua.indexOf('Chrome') > -1) browserName = 'Chrome'
+        else if (ua.indexOf('Safari') > -1) browserName = 'Safari'
+        else if (ua.indexOf('Firefox') > -1) browserName = 'Firefox'
+        else if (ua.indexOf('Edge') > -1) browserName = 'Edge'
+        return `${browserName} - ${navigator.platform}`
+      }
+
+      const response = await axios.post(
+        'http://localhost:13201/api/auth/admin-connect-client',
+        {
+          clientId,
+          deviceId,
+          deviceName: getBrowserInfo(),
+          browserInfo: getBrowserInfo()
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+
+      if (response.data.success) {
+        // Yeni sekmede client uygulamasını aç ve token'ı parametre olarak gönder
+        const clientToken = response.data.token
+        const clientUser = JSON.stringify(response.data.user)
+        const url = `http://localhost:13203?autoLogin=true&token=${encodeURIComponent(clientToken)}&user=${encodeURIComponent(clientUser)}`
+        window.open(url, '_blank')
+        toast.success('Müşteri hesabına bağlanılıyor...')
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Bağlantı hatası')
+    }
   }
 
   const handleEditUser = (user: User) => {

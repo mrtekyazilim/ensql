@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -13,6 +13,26 @@ export function Login() {
   const location = useLocation()
 
   const from = (location.state as any)?.from?.pathname || '/dashboard'
+
+  // URL'den otomatik login parametrelerini kontrol et
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const autoLogin = urlParams.get('autoLogin')
+    const token = urlParams.get('token')
+    const userParam = urlParams.get('user')
+
+    if (autoLogin === 'true' && token && userParam) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userParam))
+        localStorage.setItem('clientToken', decodeURIComponent(token))
+        localStorage.setItem('clientUser', JSON.stringify(user))
+        navigate('/dashboard', { replace: true })
+      } catch (error) {
+        console.error('Auto login error:', error)
+        setError('Otomatik giriş başarısız')
+      }
+    }
+  }, [location.search, navigate])
 
   // DeviceId oluştur veya al
   const getDeviceId = () => {
