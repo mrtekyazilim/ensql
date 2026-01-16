@@ -7,7 +7,6 @@ interface User {
   _id: string
   companyName?: string
   username: string
-  clientId: string
   hizmetBitisTarihi: string
   aktif: boolean
   kullanimIstatistikleri?: {
@@ -125,47 +124,6 @@ export function Users() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Müşteri oluşturulamadı')
-    }
-  }
-
-  const handleConnectToClient = async (clientId: string) => {
-    try {
-      const token = localStorage.getItem('token')
-      const deviceId = localStorage.getItem('deviceId') || crypto.randomUUID()
-
-      const getBrowserInfo = () => {
-        const ua = navigator.userAgent
-        let browserName = 'Bilinmeyen'
-        if (ua.indexOf('Chrome') > -1) browserName = 'Chrome'
-        else if (ua.indexOf('Safari') > -1) browserName = 'Safari'
-        else if (ua.indexOf('Firefox') > -1) browserName = 'Firefox'
-        else if (ua.indexOf('Edge') > -1) browserName = 'Edge'
-        return `${browserName} - ${navigator.platform}`
-      }
-
-      const response = await axios.post(
-        'http://localhost:13201/api/auth/admin-connect-client',
-        {
-          clientId,
-          deviceId,
-          deviceName: getBrowserInfo(),
-          browserInfo: getBrowserInfo()
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-
-      if (response.data.success) {
-        // Yeni sekmede client uygulamasını aç ve token'ı parametre olarak gönder
-        const clientToken = response.data.token
-        const clientUser = JSON.stringify(response.data.user)
-        const url = `http://localhost:13203?autoLogin=true&token=${encodeURIComponent(clientToken)}&user=${encodeURIComponent(clientUser)}`
-        window.open(url, '_blank')
-        toast.success('Müşteri hesabına bağlanılıyor...')
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Bağlantı hatası')
     }
   }
 
@@ -299,12 +257,6 @@ export function Users() {
                       className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
                     >
                       Düzenle
-                    </button>
-                    <button
-                      onClick={() => handleConnectToClient(user.clientId)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      Bağlan
                     </button>
                   </div>
                 </div>

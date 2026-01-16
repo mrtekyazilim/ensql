@@ -22,26 +22,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['admin', 'user', 'client'],
     default: 'client'
   },
-  clientId: {
-    type: String,
-    unique: true,
-    sparse: true // Sadece client kullanıcıları için
-  },
-  clientPassword: {
-    type: String
-  },
   hizmetBitisTarihi: {
     type: Date,
     required: function () {
       return this.role === 'client';
     }
-  },
-  sqlServerConfig: {
-    server: String,
-    database: String,
-    user: String,
-    password: String,
-    port: Number
   },
   kullanimIstatistikleri: {
     toplamSorguSayisi: { type: Number, default: 0 },
@@ -70,11 +55,6 @@ UserSchema.pre('save', async function (next) {
 // Şifre karşılaştırma metodu
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
-};
-
-// Connector password karşılaştırma metodu
-UserSchema.methods.compareClientPassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.clientPassword);
 };
 
 module.exports = mongoose.model('User', UserSchema);

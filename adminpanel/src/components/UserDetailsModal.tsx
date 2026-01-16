@@ -5,8 +5,6 @@ interface User {
   _id: string
   companyName?: string
   username: string
-  clientId: string
-  clientPassword?: string
   hizmetBitisTarihi: string
   aktif: boolean
   kullanimIstatistikleri?: {
@@ -43,23 +41,6 @@ export function UserDetailsModal({ user, onClose }: { user: User | null, onClose
                   {user.username}
                 </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Client ID</label>
-                <p className="mt-1 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono">
-                  {user.clientId}
-                </p>
-              </div>
-              {user.clientPassword && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Client Password</label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded font-mono">
-                    {user.clientPassword}
-                  </p>
-                  <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Bu şifreyi kaydedin! Bir daha görüntülenemez.
-                  </p>
-                </div>
-              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Hizmet Bitiş Tarihi</label>
                 <p className="mt-1 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-2 rounded">

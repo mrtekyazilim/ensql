@@ -195,7 +195,7 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password -clientPassword');
+    const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
       return res.status(404).json({
@@ -213,76 +213,6 @@ router.get('/me', async (req, res) => {
     res.status(401).json({
       success: false,
       message: 'Yetkisiz erişim'
-    });
-  }
-});
-
-// Admin'in müşteri hesabına bağlanması için token oluştur
-router.post('/admin-connect-client', protect, async (req, res) => {
-  try {
-    const { clientId } = req.body;
-
-    // Sadece admin kullanıcılar bu endpoint'i kullanabilir
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Bu işlem için admin yetkisi gereklidir'
-      });
-    }
-
-    // Client kullanıcısını bul
-    const client = await User.findOne({ clientId, role: 'client' });
-
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        message: 'Müşteri bulunamadı'
-      });
-    }
-
-    // Session kaydı oluştur
-    const { deviceId, deviceName, browserInfo } = req.body;
-    if (deviceId) {
-      await Session.findOneAndUpdate(
-        { userId: client._id, deviceId },
-        {
-          userId: client._id,
-          userType: 'client',
-          deviceId,
-          deviceName: deviceName || 'Admin Bağlantısı',
-          browserInfo: browserInfo || req.headers['user-agent'],
-          ipAddress: req.ip || req.connection.remoteAddress,
-          lastActivity: new Date(),
-          aktif: true
-        },
-        { upsert: true, new: true }
-      );
-    }
-
-    // JWT token oluştur
-    const token = jwt.sign(
-      { id: client._id, role: client.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
-    );
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        id: client._id,
-        username: client.username,
-        companyName: client.companyName,
-        role: client.role,
-        clientId: client.clientId,
-        hizmetBitisTarihi: client.hizmetBitisTarihi
-      }
-    });
-  } catch (error) {
-    console.error('Admin connect client error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Sunucu hatası'
     });
   }
 });

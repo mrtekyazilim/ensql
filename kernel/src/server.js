@@ -26,6 +26,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/admin-users', require('./routes/adminUsers'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/connector', require('./routes/connector'));
+app.use('/api/connectors', require('./routes/connectors'));
 app.use('/api/sessions', require('./routes/sessions'));
 
 // Error handling middleware

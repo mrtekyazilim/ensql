@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { Sessions } from './pages/Sessions'
+import { Profile } from './pages/Profile'
 import { Layout } from './components/Layout'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Toaster } from 'sonner'
@@ -20,6 +21,7 @@ function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="sessions" element={<Sessions />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>

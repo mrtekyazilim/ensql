@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 router.get('/', protect, adminOnly, async (req, res) => {
   try {
     const users = await User.find({ role: 'client' })
-      .select('-password -clientPassword')
+      .select('-password')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -28,7 +28,7 @@ router.get('/', protect, adminOnly, async (req, res) => {
 // Kullanıcı detayı
 router.get('/:id', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -clientPassword');
+    const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
       return res.status(404).json({
@@ -79,11 +79,6 @@ router.post('/', protect, adminOnly, async (req, res) => {
       });
     }
 
-    // ClientId otomatik oluştur (UUID)
-    const { randomUUID } = require('crypto');
-    const clientId = randomUUID();
-    const clientPassword = randomUUID(); // Otomatik güvenli şifre
-
     // Hizmet bitiş tarihi: gönderilmişse kullan, yoksa 2 ay sonrası
     let bitisTarihi;
     if (hizmetBitisTarihi) {
@@ -93,17 +88,11 @@ router.post('/', protect, adminOnly, async (req, res) => {
       bitisTarihi.setMonth(bitisTarihi.getMonth() + 2);
     }
 
-    // ClientPassword hash'le
-    const salt = await bcrypt.genSalt(10);
-    const hashedClientPassword = await bcrypt.hash(clientPassword, salt);
-
     const user = await User.create({
       companyName,
       username,
       password, // Model'de otomatik hash'lenir
       role: 'client',
-      clientId,
-      clientPassword: hashedClientPassword,
       hizmetBitisTarihi: bitisTarihi,
       sqlServerConfig,
       aktif: true
@@ -115,8 +104,6 @@ router.post('/', protect, adminOnly, async (req, res) => {
         id: user._id,
         companyName: user.companyName,
         username: user.username,
-        clientId: user.clientId,
-        clientPassword: clientPassword, // Sadece bu seferlik düz metin olarak dön (kaydetsin diye)
         hizmetBitisTarihi: user.hizmetBitisTarihi,
         aktif: user.aktif
       }
@@ -160,7 +147,6 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
         id: user._id,
         companyName: user.companyName,
         username: user.username,
-        clientId: user.clientId,
         hizmetBitisTarihi: user.hizmetBitisTarihi,
         aktif: user.aktif
       }
