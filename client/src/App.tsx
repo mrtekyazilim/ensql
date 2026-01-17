@@ -5,6 +5,7 @@ import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
+import { Connectors } from './pages/Connectors'
 import { AutoLogin } from './pages/AutoLogin'
 import { Layout } from './components/Layout'
 import { ThemeProvider } from './components/ThemeProvider'
@@ -21,13 +22,14 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="connectors" element={<Connectors />} />
             <Route path="settings" element={<Settings />} />
             <Route path="sessions" element={<Sessions />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>
-      <Toaster position="top-right" richColors />
+      <Toaster position="bottom-right" richColors />
     </ThemeProvider>
   )
 }

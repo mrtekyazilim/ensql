@@ -35,7 +35,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
-      <Toaster position="top-right" richColors />
+      <Toaster position="bottom-right" richColors />
     </ThemeProvider>
   )
 }

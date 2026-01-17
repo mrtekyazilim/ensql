@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
 const ConnectorSchema = new mongoose.Schema({
   customerId: {
@@ -51,20 +50,9 @@ const ConnectorSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Client Password hashleme middleware
-ConnectorSchema.pre('save', async function (next) {
-  if (!this.isModified('clientPassword')) {
-    return next();
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  this.clientPassword = await bcrypt.hash(this.clientPassword, salt);
-  next();
-});
-
-// Client Password karşılaştırma metodu
-ConnectorSchema.methods.compareClientPassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.clientPassword);
+// ClientPassword karşılaştırma methodu (plain text)
+ConnectorSchema.methods.compareClientPassword = function (candidatePassword) {
+  return this.clientPassword === candidatePassword;
 };
 
 module.exports = mongoose.model('Connector', ConnectorSchema);

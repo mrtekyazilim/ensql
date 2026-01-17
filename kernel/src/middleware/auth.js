@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const AdminUser = require('../models/AdminUser');
 const Customer = require('../models/Customer');
+const Connector = require('../models/Connector');
 
 // JWT token doğrulama middleware
 exports.protect = async (req, res, next) => {
@@ -84,23 +85,24 @@ exports.connectorAuth = async (req, res, next) => {
   }
 
   try {
-    const user = await User.findOne({ clientId, role: 'client' });
+    const connector = await Connector.findOne({ clientId }).populate('customerId');
 
-    if (!user) {
+    if (!connector) {
       return res.status(401).json({
         success: false,
         message: 'Geçersiz connector bilgileri'
       });
     }
 
-    const isMatch = await user.compareClientPassword(clientPassword);
-
-    if (!isMatch) {
+    // Düz metin karşılaştırma
+    if (connector.clientPassword !== clientPassword) {
       return res.status(401).json({
         success: false,
         message: 'Geçersiz connector bilgileri'
       });
     }
+
+    const user = connector.customerId;
 
     // Hizmet bitiş tarihi kontrolü
     if (user.hizmetBitisTarihi && new Date() > new Date(user.hizmetBitisTarihi)) {
@@ -111,8 +113,10 @@ exports.connectorAuth = async (req, res, next) => {
     }
 
     req.connectorUser = user;
+    req.connector = connector;
     next();
   } catch (error) {
+    console.error('Connector auth error:', error);
     return res.status(500).json({
       success: false,
       message: 'Sunucu hatası'

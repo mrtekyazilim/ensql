@@ -27,12 +27,25 @@ const forwardToConnector = async (endpoint, connector, body) => {
 // Get datetime from connector
 router.post('/datetime', connectorAuth, async (req, res) => {
   try {
-    const data = await forwardToConnector('/datetime', req.connector, req.body);
-    res.json({ success: true, data });
+    const requestBody = {
+      clientId: req.connector.clientId,
+      clientPass: req.body.clientPass
+    };
+
+    const response = await axios.post(`${CONNECTOR_URL}/datetime`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': req.connector.clientId,
+        'clientPass': req.body.clientPass
+      },
+      timeout: 10000
+    });
+
+    res.json({ success: true, data: response.data });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Connector datetime servisi hatası',
+      message: error.response?.data?.message || 'Connector datetime servisi hatası',
       error: error.response?.data || error.message
     });
   }
@@ -57,13 +70,22 @@ router.post('/cmd', connectorAuth, async (req, res) => {
 // MS SQL Server
 router.post('/mssql', connectorAuth, async (req, res) => {
   try {
-    // SQL Server config'i connector'dan al
-    const sqlConfig = {
+    // SQL Server config'i request body'den veya connector'dan al
+    const sqlConfig = req.body.config || {
       user: req.connector.sqlServerConfig.user,
       password: req.connector.sqlServerConfig.password,
       database: req.connector.sqlServerConfig.database,
       server: req.connector.sqlServerConfig.server,
-      port: req.connector.sqlServerConfig.port,
+      port: req.connector.sqlServerConfig.port
+    };
+
+    // ConnectorAbi için gerekli formatı hazırla
+    const fullConfig = {
+      ...sqlConfig,
+      dialect: 'mssql',
+      dialectOptions: {
+        instanceName: ''
+      },
       options: {
         encrypt: false,
         trustServerCertificate: true
@@ -71,16 +93,27 @@ router.post('/mssql', connectorAuth, async (req, res) => {
     };
 
     const requestBody = {
-      ...req.body,
-      config: sqlConfig
+      clientId: req.connector.clientId,
+      clientPass: req.body.clientPass,
+      config: fullConfig,
+      query: req.body.query
     };
 
-    const data = await forwardToConnector('/mssql', req.connector, requestBody);
-    res.json({ success: true, data });
+    const response = await axios.post(`${CONNECTOR_URL}/mssql`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': req.connector.clientId,
+        'clientPass': req.body.clientPass
+      },
+      timeout: 15000
+    });
+
+    // Veri yapısı: response.data.data.recordsets[0]
+    res.json({ success: true, data: response.data });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Connector mssql servisi hatası',
+      message: error.response?.data?.message || 'Connector mssql servisi hatası',
       error: error.response?.data || error.message
     });
   }

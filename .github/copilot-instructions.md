@@ -18,6 +18,9 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 - **Admin Authentication:** Kullanıcı adı ve şifre ile giriş (adminpanel için)
 - **Client Authentication:** Kullanıcı adı ve şifre ile giriş (client uygulaması için)
 - **Connector Authentication:** clientId ve clientPassword (müşteri connector bağlantısı için)
+  - **ÖNEMLİ:** Connector `clientPassword` alanı **plain text** olarak database'de saklanır (hash'lenmez)
+  - Karşılaştırma işlemi düz string equality ile yapılır
+  - Güvenlik: Connector sadece ilgili müşteriye ait verilere erişebilir
 
 **Özellikler:**
 
@@ -25,6 +28,57 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 - SQL sorgu yönetimi
 - Rapor veri servisi
 - Connector bağlantı yönetimi
+- **ConnectorAbi Proxy:** Client tarafından ConnectorAbi'ye doğrudan erişim yerine, kernel üzerinden proxy edilir
+
+**ConnectorAbi Entegrasyonu:**
+
+- **Base URL:** https://kernel.connectorabi.com/api/v1
+- **Authentication:** clientId ve clientPass (hem header hem body'de)
+- **Endpoints:**
+  - `/datetime` - Connector bağlantı testi
+  - `/mssql` - SQL Server sorgu çalıştırma
+- **Veri Formatı:**
+
+  ```json
+  // Request
+  {
+    "clientId": "...",
+    "clientPass": "...",
+    "config": {
+      "user": "sa",
+      "password": "...",
+      "database": "...",
+      "server": "localhost",
+      "port": 1433,
+      "dialect": "mssql",
+      "dialectOptions": { "instanceName": "" },
+      "options": { "encrypt": false, "trustServerCertificate": true }
+    },
+    "query": "SELECT * FROM ..."
+  }
+
+  // Response (mssql endpoint)
+  {
+    "data": {
+      "recordsets": [
+        [
+          { "Column1": "value1", "Column2": "value2" }
+        ]
+      ]
+    }
+  }
+  ```
+
+- **Veri Erişimi:**
+  - Backend proxy'den: `response.data.data.data.recordsets[0]` (çünkü backend `{ success: true, data: connectorResponse }` döner)
+  - Direct ConnectorAbi'den: `response.data.data.recordsets[0]`
+- **Timeout:** datetime için 10000ms, mssql için 15000ms
+- **Client Kullanımı:** Client app'ler ConnectorAbi'ye doğrudan değil, `http://localhost:13201/api/connector-proxy/*` üzerinden erişir
+- **Backend Endpoints:**
+  - `/api/connector-proxy/datetime` - Connector bağlantı testi
+  - `/api/connector-proxy/mssql` - SQL Server sorgu çalıştırma (config body'de veya connector'dan)
+  - `/api/connector-proxy/mysql` - MySQL sorgu çalıştırma
+  - `/api/connector-proxy/pg` - PostgreSQL sorgu çalıştırma
 
 ### adminpanel/ - Admin Panel Uygulaması
 

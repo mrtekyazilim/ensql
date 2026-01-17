@@ -23,8 +23,8 @@ const connectorAuth = async (req, res, next) => {
       });
     }
 
-    // Password kontrolü
-    const isPasswordValid = await connector.compareClientPassword(clientPass);
+    // Password kontrolü (plain text karşılaştırma)
+    const isPasswordValid = connector.compareClientPassword(clientPass);
 
     if (!isPasswordValid) {
       return res.status(401).json({
