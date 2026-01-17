@@ -2,7 +2,10 @@ import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from './ThemeToggle'
 import { Copyright } from './Copyright'
-import { User, LogOut, Database, ChevronDown } from 'lucide-react'
+import { Logo } from './Logo'
+import { PWAInstallBanner } from './PWAInstallBanner'
+import { usePWAInstall } from '../hooks/usePWAInstall'
+import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
 
@@ -15,6 +18,7 @@ export function Layout() {
   const [connectors, setConnectors] = useState<any[]>([])
   const [activeConnector, setActiveConnector] = useState<any>(null)
   const location = useLocation()
+  const { isInstallable, isFromAdminPanel, install } = usePWAInstall()
 
   useEffect(() => {
     const token = localStorage.getItem('clientToken')
@@ -97,37 +101,24 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* PWA Install Banner */}
+      <PWAInstallBanner />
+
       <nav className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">EnSQL</h1>
+                <a href="/dashboard" className="hover:opacity-80 transition-opacity cursor-pointer group">
+                  <Logo size="md" variant="default" />
+                </a>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <a
-                  href="/dashboard"
-                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Ana Sayfa
-                </a>
                 <a
                   href="/reports"
                   className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                 >
                   Raporlar
-                </a>
-                <a
-                  href="/settings"
-                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Ayarlar
-                </a>
-                <a
-                  href="/sessions"
-                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Oturumlar
                 </a>
               </div>
             </div>
@@ -184,7 +175,6 @@ export function Layout() {
                 </div>
               )}
 
-              <ThemeToggle />
 
               {/* User Menu */}
               <div className="relative">
@@ -196,7 +186,6 @@ export function Layout() {
                     <User className="w-5 h-5" />
                   </div>
                   <span className="hidden md:block font-medium">
-                    {currentUser?.companyName || currentUser?.username || 'Kullanıcı'}
                   </span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -228,6 +217,48 @@ export function Layout() {
                           <User className="w-4 h-4 mr-3" />
                           Profil
                         </a>
+
+                        <a
+                          href="/settings"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Settings className="w-4 h-4 mr-3" />
+                          Ayarlar
+                        </a>
+
+                        {isInstallable && !isFromAdminPanel && (
+                          <button
+                            onClick={() => {
+                              install()
+                              setShowUserMenu(false)
+                            }}
+                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <Download className="w-4 h-4 mr-3" />
+                            Uygulamayı Yükle
+                          </button>
+                        )}
+
+                        <a
+                          href="/sessions"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Monitor className="w-4 h-4 mr-3" />
+                          Oturumlar
+                        </a>
+
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                        <div className="px-4 py-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Tema</span>
+                            <ThemeToggle />
+                          </div>
+                        </div>
+
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
                         <button
                           onClick={handleLogout}
@@ -270,7 +301,7 @@ export function Layout() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
 

@@ -292,4 +292,80 @@ router.put('/change-password', protect, async (req, res) => {
   }
 });
 
+// Admin'in müşteri olarak giriş yapması
+router.post('/admin-login-as-customer/:customerId', protect, async (req, res) => {
+  try {
+    // Sadece admin kullanıcılar bu endpoint'i kullanabilir
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    const { customerId } = req.params;
+    const { deviceId, deviceName, browserInfo } = req.body;
+
+    // Müşteriyi bul
+    const customer = await Customer.findById(customerId);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Müşteri bulunamadı'
+      });
+    }
+
+    // Hizmet bitiş tarihi kontrolü
+    if (new Date(customer.hizmetBitisTarihi) < new Date()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Hizmet süresi dolmuş'
+      });
+    }
+
+    // Session kaydı oluştur
+    if (deviceId) {
+      await CustomerSession.findOneAndUpdate(
+        { customerId: customer._id, deviceId },
+        {
+          customerId: customer._id,
+          deviceId,
+          deviceName: deviceName || 'Admin Panel',
+          browserInfo: browserInfo || 'Admin Connection',
+          ipAddress: req.ip,
+          lastActivity: new Date(),
+          aktif: true
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    // JWT token oluştur - role='customer' ekle
+    const token = jwt.sign(
+      { id: customer._id, username: customer.username, role: 'customer' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Customer objesini düzenle - role ekle
+    const customerData = customer.toObject();
+    customerData.role = 'customer';
+    delete customerData.password;
+
+    res.json({
+      success: true,
+      token,
+      user: customerData,
+      message: 'Admin olarak müşteri hesabına giriş yapıldı'
+    });
+  } catch (error) {
+    console.error('Admin login as customer error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
 module.exports = router;

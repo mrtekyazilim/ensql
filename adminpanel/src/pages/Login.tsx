@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { Logo } from '../components/Logo'
 import { Settings, Users, BarChart3, Shield } from 'lucide-react'
 
 export function Login() {
@@ -78,8 +79,8 @@ export function Login() {
             <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
             <div className="relative z-10 h-full flex flex-col justify-center">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-white mb-2">EnSQL</h1>
-                <p className="text-lg text-indigo-100 font-medium">Admin Panel</p>
+                <Logo size="lg" variant="white" />
+                <p className="mt-2 text-lg text-indigo-100 font-medium">Admin Panel</p>
               </div>
 
               <div className="space-y-4 mb-8">

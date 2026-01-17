@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { ThemeToggle } from '../components/ThemeToggle'
-import { Monitor, Smartphone, Tablet, Zap, Shield, TrendingUp } from 'lucide-react'
+import { Logo } from '../components/Logo'
+import { usePWAInstall } from '../hooks/usePWAInstall'
+import { Monitor, Smartphone, Tablet, Zap, Shield, TrendingUp, Download } from 'lucide-react'
 
 export function Login() {
   const [username, setUsername] = useState('')
@@ -11,6 +13,7 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { isInstallable, isFromAdminPanel, install } = usePWAInstall()
 
   const from = (location.state as any)?.from?.pathname || '/dashboard'
 
@@ -97,8 +100,8 @@ export function Login() {
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]"></div>
         <div className="relative z-10 max-w-xl">
           <div className="mb-8">
-            <h1 className="text-5xl font-bold text-white mb-4">EnSQL</h1>
-            <p className="text-xl text-blue-100">Şirket Raporlama Sistemi</p>
+            <Logo size="lg" variant="white" />
+            <p className="mt-4 text-xl text-blue-100">Şirket Raporlama Sistemi</p>
           </div>
 
           <div className="mb-12">
@@ -161,7 +164,7 @@ export function Login() {
       </div>
 
       {/* Sağ Taraf - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 mt-0">
         <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-2xl">
           <div>
             <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
@@ -219,6 +222,20 @@ export function Login() {
                 {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
               </button>
             </div>
+
+            {/* PWA Install Button */}
+            {isInstallable && !isFromAdminPanel && (
+              <div>
+                <button
+                  type="button"
+                  onClick={install}
+                  className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border-2 border-blue-600 dark:border-blue-500 text-sm font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+                >
+                  <Download className="w-5 h-5" />
+                  Uygulamayı Yükle
+                </button>
+              </div>
+            )}
           </form>
 
           {/* Mobil için Özellikler */}

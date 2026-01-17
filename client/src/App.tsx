@@ -5,6 +5,7 @@ import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
+import { AutoLogin } from './pages/AutoLogin'
 import { Layout } from './components/Layout'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Toaster } from 'sonner'
@@ -15,6 +16,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/auto-login" element={<AutoLogin />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />

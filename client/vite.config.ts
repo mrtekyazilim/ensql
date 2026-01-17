@@ -9,36 +9,50 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
+      includeAssets: ['img/icon.png', 'img/icon-192.png', 'img/icon-512.png'],
       manifest: {
-        name: 'EnSQL Client',
+        name: 'EnSQL - Rapor Sistemi',
         short_name: 'EnSQL',
-        description: 'EnSQL Rapor Uygulaması',
-        theme_color: '#ffffff',
+        description: 'SQL Server bazlı rapor görüntüleme uygulaması',
+        theme_color: '#2563eb',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/img/icon-192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/img/icon-512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globDirectory: 'dist',
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\./i,
+            urlPattern: /^http:\/\/localhost:13201\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 saat
+                maxAgeSeconds: 5 * 60 // 5 dakika
               }
             }
           }

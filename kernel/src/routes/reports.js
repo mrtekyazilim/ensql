@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Report = require('../models/Report');
-const User = require('../models/User');
+const Customer = require('../models/Customer');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Kullanıcının raporlarını listele

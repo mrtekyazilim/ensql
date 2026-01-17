@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Building2, Filter } from 'lucide-react'
+import { Building2, Filter, Search, Edit2, Trash2, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface User {
@@ -22,6 +22,10 @@ export function Users() {
   const [editMode, setEditMode] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [filter, setFilter] = useState<'all' | '1month' | '3months' | '6months' | '1year'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<User | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   // Default hizmet bitiş tarihi: 2 ay sonrası
   const getDefaultBitisTarihi = () => {
@@ -47,7 +51,7 @@ export function Users() {
   // Kullanıcıları filtrele
   const getFilteredUsers = () => {
     const now = new Date()
-    const filtered = users.filter(user => {
+    let filtered = users.filter(user => {
       const bitisTarihi = new Date(user.hizmetBitisTarihi)
       const diffTime = bitisTarihi.getTime() - now.getTime()
       const diffDays = diffTime / (1000 * 60 * 60 * 24)
@@ -65,6 +69,16 @@ export function Users() {
           return true
       }
     })
+
+    // Arama filtresi
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(user =>
+        user.companyName?.toLowerCase().includes(query) ||
+        user.username.toLowerCase().includes(query)
+      )
+    }
+
     return filtered
   }
 
@@ -178,29 +192,76 @@ export function Users() {
     }
   }
 
+  const handleDeleteUser = (user: User) => {
+    setDeletingUser(user)
+    setDeleteConfirmText('')
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!deletingUser) return
+
+    if (deleteConfirmText !== deletingUser.username) {
+      toast.error('Kullanıcı adı eşleşmiyor!')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.delete(
+        `http://localhost:13201/api/customers/${deletingUser._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        setShowDeleteModal(false)
+        setDeletingUser(null)
+        setDeleteConfirmText('')
+        toast.success('Müşteri başarıyla silindi!')
+        loadUsers()
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Müşteri silinemedi')
+    }
+  }
+
+  const handleConnectToClient = async (user: User) => {
+    try {
+      const token = localStorage.getItem('token')
+      const deviceId = `admin-panel-${Date.now()}`
+
+      const response = await axios.post(
+        `http://localhost:13201/api/auth/admin-login-as-customer/${user._id}`,
+        {
+          deviceId,
+          deviceName: 'Admin Panel',
+          browserInfo: navigator.userAgent
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        // Client token'ı URL parametresi olarak gönder
+        const clientUrl = `http://localhost:13203/auto-login?token=${encodeURIComponent(response.data.token)}&user=${encodeURIComponent(JSON.stringify(response.data.user))}&deviceId=${encodeURIComponent(deviceId)}`
+
+        // Client uygulamasını aç
+        window.open(clientUrl, '_blank')
+        toast.success(`${user.companyName || user.username} hesabına bağlanıldı`)
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Bağlantı başarısız')
+    }
+  }
+
   if (loading) {
     return <div>Yükleniyor...</div>
   }
 
   return (
     <div>
-      <div className="sm:flex sm:items-center sm:justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Müşteriler</h2>
-        <div className="flex items-center gap-3 mt-3 sm:mt-0">
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="all">Tüm Müşteriler</option>
-              <option value="1month">1 Ay İçinde Dolacak</option>
-              <option value="3months">3 Ay İçinde Dolacak</option>
-              <option value="6months">6 Ay İçinde Dolacak</option>
-              <option value="1year">1 Yıl İçinde Dolacak</option>
-            </select>
-          </div>
+      <div className="mb-6">
+        <div className="sm:flex sm:items-center sm:justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Müşteriler</h2>
           <button
             onClick={() => {
               setFormData({
@@ -211,10 +272,37 @@ export function Users() {
               })
               setShowModal(true)
             }}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-3 sm:mt-0"
           >
             Yeni Müşteri
           </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Müşteri ismi veya kullanıcı adı ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as any)}
+              className="w-full sm:w-auto pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">Tüm Müşteriler</option>
+              <option value="1month">1 Ay İçinde Dolacak</option>
+              <option value="3months">3 Ay İçinde Dolacak</option>
+              <option value="6months">6 Ay İçinde Dolacak</option>
+              <option value="1year">1 Yıl İçinde Dolacak</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -251,13 +339,32 @@ export function Users() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-4">
                     <button
-                      onClick={() => handleEditUser(user)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700"
+                      onClick={() => handleConnectToClient(user)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      title="Client uygulamasına bağlan"
                     >
-                      Düzenle
+                      <ExternalLink className="h-4 w-4" />
+                      Bağlan
                     </button>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="p-1.5 border border-transparent rounded-md text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                        title="Düzenle"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="p-1.5 border border-transparent rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        title="Sil"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -346,6 +453,69 @@ export function Users() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && deletingUser && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80 transition-opacity" onClick={() => setShowDeleteModal(false)}></div>
+
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 sm:mx-0 sm:h-10 sm:w-10">
+                    <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                      Müşteriyi Sil
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        <strong className="text-gray-900 dark:text-white">{deletingUser.companyName || deletingUser.username}</strong> müşterisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        Onaylamak için aşağıdaki kullanıcı adını yazın:
+                      </p>
+                      <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-3">
+                        {deletingUser.username}
+                      </p>
+                      <input
+                        type="text"
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        placeholder="Kullanıcı adını buraya yazın"
+                        className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={confirmDeleteUser}
+                  disabled={deleteConfirmText !== deletingUser.username}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Sil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setDeletingUser(null)
+                    setDeleteConfirmText('')
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  İptal
+                </button>
+              </div>
             </div>
           </div>
         </div>
