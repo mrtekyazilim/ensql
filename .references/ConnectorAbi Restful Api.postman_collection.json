@@ -1,532 +1,478 @@
 {
-	"info": {
-		"_postman_id": "689426b5-b7cb-4dd5-be6b-e4c67d7db9a8",
-		"name": "ConnectorAbi Restful Api",
-		"description": "## Introduction\n\nDownload & install this connector to reach to your pc/server over ConnectorJS Restful Services.\n\n## Supported Data Systems\n\n- SQL Server\n    \n- MySQL\n    \n- PostgreSQL\n    \n- Excel\n    \n- File System\n    \n- Linux Shell\n    \n- Windows Command Prompt\n    \n\n## Download & Install\n\nDownload [ClientConnector (for Windows)](https://github.com/connectorjs/connector-server/releases) client connector application.  \nUnpack zip file and run `connectorjs_setup.exe`\n\nSetup needs administration privileges to install properly.\n\n## clientId & clientPass\n\nWhen the connector runs first time, it takes new id and password from ConnectorJS Server. You need them for authentication.\n\n## Structure\n\n<img src=\"https://raw.githubusercontent.com/connectorjs/connector-server/main/docs/make-docs/clientconnector-structure.svg\">\n\nContinue",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "37843953",
-		"_collection_link": "https://www.postman.com/dinamikup/workspace/connectorabi/collection/37843953-689426b5-b7cb-4dd5-be6b-e4c67d7db9a8?action=share&source=collection_link&creator=37843953"
-	},
-	"item": [
-		{
-			"name": "General",
-			"item": [
-				{
-					"name": "datetime",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"clientId\": \"{{connector_client_id}}\",\r\n    \"clientPass\": \"{{connector_client_pass}}\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/datetime",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"datetime"
-							]
-						},
-						"description": "Get date & time (UTC) from ConnectorJS Client"
-					},
-					"response": []
-				},
-				{
-					"name": "cmd",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"command\": \"dir C:\\\\Windows\\\\*.* /AD\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/cmd",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"cmd"
-							]
-						},
-						"description": "Run terminal commands on computer which installed ConnectorJS Client.\n\nSupported OS:\n- Win32\n- MacOS\n- Linux"
-					},
-					"response": []
-				}
-			],
-			"description": "General"
-		},
-		{
-			"name": "SQL",
-			"item": [
-				{
-					"name": "mssql",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"config\": {\r\n        \"user\": \"{{mssql_user}}\",\r\n        \"password\": \"{{mssql_password}}\",\r\n        \"database\": \"{{mssql_database}}\",\r\n        \"server\": \"localhost\",\r\n        \"port\": 1440,\r\n        \"dialect\": \"mssql\",\r\n        \"dialectOptions\": {\r\n            \"instanceName\": \"\"\r\n        },\r\n        \"options\": {\r\n            \"encrypt\": false,\r\n            \"trustServerCertificate\": true\r\n        }\r\n    },\r\n    \"query\":\"SELECT name FROM sys.objects WHERE type='U' ORDER BY name\",\r\n    \"query11\": \"select * from VERI_TABANLARI\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/mssql",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"mssql"
-							]
-						},
-						"description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
-					},
-					"response": []
-				},
-				{
-					"name": "mssql Copy",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"config\": {\r\n        \"user\": \"dnmk\",\r\n        \"password\": \"1475\",\r\n        \"database\": \"MikroDB_V16_001\",\r\n        \"server\": \"localhost\",\r\n        \"port\": 15253,\r\n        \"options\": {\r\n            \"encrypt\": false,\r\n            \"trustServerCertificate\": true\r\n        }\r\n    },\r\n    \"query111\":\"SELECT * FROM sys.objects WHERE type='U'\",\r\n    \"query\":\"SELECT * FROM CARI_PERSONEL_TANIMLARI\"\r\n    \r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/mssql",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"mssql"
-							]
-						},
-						"description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
-					},
-					"response": []
-				},
-				{
-					"name": "mysql",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"config\": {\r\n        \"host\": \"localhost\",\r\n        \"user\": \"root\",\r\n\t\t\"port\":3306,\r\n        \"password\": \"{{mysql_password}}\",\r\n        \"database\": \"{{mysql_database}}\"\r\n    },\r\n    \"query\": \"SELECT * FROM table_help\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/mysql",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"mysql"
-							]
-						},
-						"description": "Control `MySQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mysql"
-					},
-					"response": []
-				},
-				{
-					"name": "pg",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"config\": {\r\n        \"user\": \"postgres\",\r\n        \"host\": \"localhost\",\r\n        \"database\": \"{{pg_database}}\",\r\n        \"password\": \"{{pg_password}}\",\r\n        \"port\": 5432\r\n    },\r\n    \"query\": \"SELECT * FROM table1\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/pg",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"pg"
-							]
-						},
-						"description": "Control `PostgreSQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/pg"
-					},
-					"response": []
-				}
-			],
-			"description": "SQL"
-		},
-		{
-			"name": "File System",
-			"item": [
-				{
-					"name": "read-file",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"filePath\": \"C:\\\\temp\\\\read-file-test.txt\",\r\n    \"encoding\":\"base64\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/read-file",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"read-file"
-							]
-						},
-						"description": "Read a file on computer which installed ConnectorJS Client."
-					},
-					"response": []
-				},
-				{
-					"name": "write-file",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"filePath\": \"C:/arge/temp/deneme${(new Date()).yyyymmdd()}.txt\",\r\n    \"data\":\"merhaba şĞiidfdf\\ndeneme1234\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/write-file",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"write-file"
-							]
-						},
-						"description": "Write data to a file on computer which installed ConnectorJS Client."
-					},
-					"response": []
-				}
-			],
-			"description": "File System"
-		},
-		{
-			"name": "Excel",
-			"item": [
-				{
-					"name": "read-excel",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"filePath\": \"C:/arge/temp/test01.xlsx\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/read-excel",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"read-excel"
-							]
-						},
-						"description": "Read an excel file on computer which installed ConnectorJS Client."
-					},
-					"response": []
-				},
-				{
-					"name": "write-excel",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"data\": [\r\n        [\r\n            {\r\n                \"value\": \"technoShaman\"\r\n            },\r\n            {\r\n                \"value\": 2023\r\n            }\r\n        ],\r\n        [\r\n            {\r\n                \"value\": \"istanbul\"\r\n            },\r\n            {\r\n                \"value\": 34\r\n            }\r\n        ]\r\n    ],\r\n    \"filePath\": \"C:/arge/temp/test01.xlsx\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/write-excel",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"write-excel"
-							]
-						},
-						"description": "Write array data to excel (xlsx) on computer which installed ConnectorJS Client."
-					},
-					"response": []
-				}
-			],
-			"description": "Excel"
-		},
-		{
-			"name": "Rest Api",
-			"item": [
-				{
-					"name": "Rest Api - Fetch",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "clientId",
-								"value": "{{connector_client_id}}",
-								"type": "text"
-							},
-							{
-								"key": "clientPass",
-								"value": "{{connector_client_pass}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n\t\"url\": \"http://localhost:8084/Api/APIMethods/VergiListesiV2\",\r\n\t\"method\": \"POST\",\r\n\t\"headers\": {\r\n\t\t\"content-type\": \"application/json\"\r\n\t},\r\n\t\"body\": {\r\n\t\t\"Mikro\": {\r\n\t\t\t\"FirmaKodu\": \"B8B\",\r\n\t\t\t\"CalismaYili\": \"2024\",\r\n\t\t\t\"KullaniciKodu\": \"SRV\",\r\n\t\t\t\"Sifre\": \"\",\r\n\t\t\t\"ApiKey11\": \"63ABWMLPNWgX9Jmywy6la/iYAMMA1z8ol1/M2j7Im90nvlQ5LRDtUTPItWIDgRGrqlkoD/Ces/TrFHndG1jKwROZDCbHX67/W7+UYOa0I5o=\"\r\n\t\t}\r\n\t}\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{connector_server_uri}}/rest",
-							"host": [
-								"{{connector_server_uri}}"
-							],
-							"path": [
-								"rest"
-							]
-						},
-						"description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "New Request",
-			"request": {
-				"method": "GET",
-				"header": []
-			},
-			"response": []
-		},
-		{
-			"name": "New Request",
-			"request": {
-				"method": "GET",
-				"header": []
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		}
-	]
+  "info": {
+    "_postman_id": "689426b5-b7cb-4dd5-be6b-e4c67d7db9a8",
+    "name": "ConnectorAbi Restful Api",
+    "description": "## Introduction\n\nDownload & install this connector to reach to your pc/server over ConnectorJS Restful Services.\n\n## Supported Data Systems\n\n- SQL Server\n    \n- MySQL\n    \n- PostgreSQL\n    \n- Excel\n    \n- File System\n    \n- Linux Shell\n    \n- Windows Command Prompt\n    \n\n## Download & Install\n\nDownload [ClientConnector (for Windows)](https://github.com/connectorjs/connector-server/releases) client connector application.  \nUnpack zip file and run `connectorjs_setup.exe`\n\nSetup needs administration privileges to install properly.\n\n## clientId & clientPass\n\nWhen the connector runs first time, it takes new id and password from ConnectorJS Server. You need them for authentication.\n\n## Structure\n\n<img src=\"https://raw.githubusercontent.com/connectorjs/connector-server/main/docs/make-docs/clientconnector-structure.svg\">\n\nContinue",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37843953",
+    "_collection_link": "https://www.postman.com/dinamikup/workspace/connectorabi/collection/37843953-689426b5-b7cb-4dd5-be6b-e4c67d7db9a8?action=share&source=collection_link&creator=37843953"
+  },
+  "item": [
+    {
+      "name": "General",
+      "item": [
+        {
+          "name": "datetime",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"clientId\": \"{{connector_client_id}}\",\r\n    \"clientPass\": \"{{connector_client_pass}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/datetime",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["datetime"]
+            },
+            "description": "Get date & time (UTC) from ConnectorJS Client"
+          },
+          "response": []
+        },
+        {
+          "name": "cmd",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"command\": \"dir C:\\\\Windows\\\\*.* /AD\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/cmd",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["cmd"]
+            },
+            "description": "Run terminal commands on computer which installed ConnectorJS Client.\n\nSupported OS:\n- Win32\n- MacOS\n- Linux"
+          },
+          "response": []
+        }
+      ],
+      "description": "General"
+    },
+    {
+      "name": "SQL",
+      "item": [
+        {
+          "name": "mssql",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [""],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"config\": {\r\n        \"user\": \"{{mssql_user}}\",\r\n        \"password\": \"{{mssql_password}}\",\r\n        \"database\": \"{{mssql_database}}\",\r\n        \"server\": \"localhost\",\r\n        \"port\": 1440,\r\n        \"dialect\": \"mssql\",\r\n        \"dialectOptions\": {\r\n            \"instanceName\": \"\"\r\n        },\r\n        \"options\": {\r\n            \"encrypt\": false,\r\n            \"trustServerCertificate\": true\r\n        }\r\n    },\r\n    \"query\":\"SELECT name FROM sys.objects WHERE type='U' ORDER BY name\",\r\n    \"query11\": \"select * from VERI_TABANLARI\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/mssql",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["mssql"]
+            },
+            "description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
+          },
+          "response": []
+        },
+        {
+          "name": "mssql Copy",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [""],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"config\": {\r\n        \"user\": \"dnmk\",\r\n        \"password\": \"1475\",\r\n        \"database\": \"MikroDB_V16_001\",\r\n        \"server\": \"localhost\",\r\n        \"port\": 15253,\r\n        \"options\": {\r\n            \"encrypt\": false,\r\n            \"trustServerCertificate\": true\r\n        }\r\n    },\r\n    \"query111\":\"SELECT * FROM sys.objects WHERE type='U'\",\r\n    \"query\":\"SELECT * FROM CARI_PERSONEL_TANIMLARI\"\r\n    \r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/mssql",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["mssql"]
+            },
+            "description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
+          },
+          "response": []
+        },
+        {
+          "name": "mysql",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"config\": {\r\n        \"host\": \"localhost\",\r\n        \"user\": \"root\",\r\n\t\t\"port\":3306,\r\n        \"password\": \"{{mysql_password}}\",\r\n        \"database\": \"{{mysql_database}}\"\r\n    },\r\n    \"query\": \"SELECT * FROM table_help\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/mysql",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["mysql"]
+            },
+            "description": "Control `MySQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mysql"
+          },
+          "response": []
+        },
+        {
+          "name": "pg",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"config\": {\r\n        \"user\": \"postgres\",\r\n        \"host\": \"localhost\",\r\n        \"database\": \"{{pg_database}}\",\r\n        \"password\": \"{{pg_password}}\",\r\n        \"port\": 5432\r\n    },\r\n    \"query\": \"SELECT * FROM table1\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/pg",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["pg"]
+            },
+            "description": "Control `PostgreSQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/pg"
+          },
+          "response": []
+        }
+      ],
+      "description": "SQL"
+    },
+    {
+      "name": "File System",
+      "item": [
+        {
+          "name": "read-file",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"filePath\": \"C:\\\\temp\\\\read-file-test.txt\",\r\n    \"encoding\":\"base64\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/read-file",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["read-file"]
+            },
+            "description": "Read a file on computer which installed ConnectorJS Client."
+          },
+          "response": []
+        },
+        {
+          "name": "write-file",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"filePath\": \"C:/arge/temp/deneme${(new Date()).yyyymmdd()}.txt\",\r\n    \"data\":\"merhaba şĞiidfdf\\ndeneme1234\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/write-file",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["write-file"]
+            },
+            "description": "Write data to a file on computer which installed ConnectorJS Client."
+          },
+          "response": []
+        }
+      ],
+      "description": "File System"
+    },
+    {
+      "name": "Excel",
+      "item": [
+        {
+          "name": "read-excel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"filePath\": \"C:/arge/temp/test01.xlsx\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/read-excel",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["read-excel"]
+            },
+            "description": "Read an excel file on computer which installed ConnectorJS Client."
+          },
+          "response": []
+        },
+        {
+          "name": "write-excel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"data\": [\r\n        [\r\n            {\r\n                \"value\": \"technoShaman\"\r\n            },\r\n            {\r\n                \"value\": 2023\r\n            }\r\n        ],\r\n        [\r\n            {\r\n                \"value\": \"istanbul\"\r\n            },\r\n            {\r\n                \"value\": 34\r\n            }\r\n        ]\r\n    ],\r\n    \"filePath\": \"C:/arge/temp/test01.xlsx\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/write-excel",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["write-excel"]
+            },
+            "description": "Write array data to excel (xlsx) on computer which installed ConnectorJS Client."
+          },
+          "response": []
+        }
+      ],
+      "description": "Excel"
+    },
+    {
+      "name": "Rest Api",
+      "item": [
+        {
+          "name": "Rest Api - Fetch",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [""],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "clientId",
+                "value": "{{connector_client_id}}",
+                "type": "text"
+              },
+              {
+                "key": "clientPass",
+                "value": "{{connector_client_pass}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n\t\"url\": \"http://localhost:8084/Api/APIMethods/VergiListesiV2\",\r\n\t\"method\": \"POST\",\r\n\t\"headers\": {\r\n\t\t\"content-type\": \"application/json\"\r\n\t},\r\n\t\"body\": {\r\n\t\t\"Mikro\": {\r\n\t\t\t\"FirmaKodu\": \"B8B\",\r\n\t\t\t\"CalismaYili\": \"2024\",\r\n\t\t\t\"KullaniciKodu\": \"SRV\",\r\n\t\t\t\"Sifre\": \"\",\r\n\t\t\t\"ApiKey11\": \"63ABWMLPNWgX9Jmywy6la/iYAMMA1z8ol1/M2j7Im90nvlQ5LRDtUTPItWIDgRGrqlkoD/Ces/TrFHndG1jKwROZDCbHX67/W7+UYOa0I5o=\"\r\n\t\t}\r\n\t}\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://kernel.connectorabi.com/api/v1/rest",
+              "host": ["https://kernel.connectorabi.com/api/v1"],
+              "path": ["rest"]
+            },
+            "description": "Control `MS SQL Server` via ConnectorJS Client.\n\nFor more information, look at https://www.npmjs.com/package/mssql"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
 }

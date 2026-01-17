@@ -82,12 +82,12 @@ export function Users() {
   const loadUsers = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:13201/api/users', {
+      const response = await axios.get('http://localhost:13201/api/customers', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (response.data.success) {
-        setUsers(response.data.users)
+        setUsers(response.data.customers)
       }
     } catch (error) {
       console.error('Users loading error:', error)
@@ -107,7 +107,7 @@ export function Users() {
         companyName: formData.companyName ? toTitleCase(formData.companyName) : ''
       }
 
-      const response = await axios.post('http://localhost:13201/api/users', formattedData, {
+      const response = await axios.post('http://localhost:13201/api/customers', formattedData, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -155,7 +155,7 @@ export function Users() {
       }
 
       const response = await axios.put(
-        `http://localhost:13201/api/users/${editingUser._id}`,
+        `http://localhost:13201/api/customers/${editingUser._id}`,
         formattedData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

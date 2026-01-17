@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Session = require('../models/Session');
+const AdminUser = require('../models/AdminUser');
+const Customer = require('../models/Customer');
+const AdminSession = require('../models/AdminSession');
+const CustomerSession = require('../models/CustomerSession');
 const jwt = require('jsonwebtoken');
 const { protect } = require('../middleware/auth');
 
@@ -18,7 +20,7 @@ router.post('/admin/login', async (req, res) => {
     }
 
     // Admin kullanıcısını bul
-    const user = await User.findOne({ username, role: 'admin' });
+    const user = await AdminUser.findOne({ username });
 
     if (!user) {
       return res.status(401).json({
@@ -40,11 +42,10 @@ router.post('/admin/login', async (req, res) => {
     // Session kaydı oluştur
     const { deviceId, deviceName, browserInfo } = req.body;
     if (deviceId) {
-      await Session.findOneAndUpdate(
-        { userId: user._id, deviceId },
+      await AdminSession.findOneAndUpdate(
+        { adminUserId: user._id, deviceId },
         {
-          userId: user._id,
-          userType: 'admin',
+          adminUserId: user._id,
           deviceId,
           deviceName: deviceName || 'Bilinmeyen Cihaz',
           browserInfo: browserInfo || req.headers['user-agent'],
@@ -94,7 +95,7 @@ router.post('/client/login', async (req, res) => {
     }
 
     // Client kullanıcısını bul
-    const user = await User.findOne({ username, role: 'client' });
+    const user = await Customer.findOne({ username });
 
     if (!user) {
       return res.status(401).json({
@@ -136,11 +137,10 @@ router.post('/client/login', async (req, res) => {
     // Session kaydı oluştur
     const { deviceId, deviceName, browserInfo } = req.body;
     if (deviceId) {
-      await Session.findOneAndUpdate(
-        { userId: user._id, deviceId },
+      await CustomerSession.findOneAndUpdate(
+        { customerId: user._id, deviceId },
         {
-          userId: user._id,
-          userType: 'client',
+          customerId: user._id,
           deviceId,
           deviceName: deviceName || 'Bilinmeyen Cihaz',
           browserInfo: browserInfo || req.headers['user-agent'],
@@ -154,7 +154,7 @@ router.post('/client/login', async (req, res) => {
 
     // JWT token oluştur
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: 'customer' },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE }
     );
@@ -165,7 +165,8 @@ router.post('/client/login', async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        role: user.role,
+        companyName: user.companyName,
+        role: 'customer',
         hizmetBitisTarihi: user.hizmetBitisTarihi
       }
     });
@@ -195,7 +196,19 @@ router.get('/me', async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
+
+    // Role'e göre uygun modelden kullanıcıyı bul
+    let user;
+    if (decoded.role === 'admin' || decoded.role === 'user') {
+      user = await AdminUser.findById(decoded.id).select('-password');
+    } else {
+      user = await Customer.findById(decoded.id).select('-password');
+      // Customer için role ekle
+      if (user) {
+        user = user.toObject();
+        user.role = 'customer';
+      }
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -236,7 +249,14 @@ router.put('/change-password', protect, async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id);
+    // protect middleware zaten doğru modelden kullanıcıyı yükledi
+    // Tekrar full user objesini al (şifre dahil)
+    let user;
+    if (req.user.role === 'admin' || req.user.role === 'user') {
+      user = await AdminUser.findById(req.user._id);
+    } else {
+      user = await Customer.findById(req.user._id);
+    }
 
     if (!user) {
       return res.status(404).json({

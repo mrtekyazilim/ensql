@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const AdminUser = require('../models/AdminUser');
 const { protect, adminOnly } = require('../middleware/auth');
 
 // Admin kullanıcılarını listele (sadece admin)
 router.get('/', protect, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({ role: { $in: ['admin', 'user'] } })
-      .select('-password -clientPassword')
+    const users = await AdminUser.find()
+      .select('-password')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -44,7 +44,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     }
 
     // Kullanıcı adı kontrolü
-    const existingUser = await User.findOne({ username });
+    const existingUser = await AdminUser.findOne({ username });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -52,7 +52,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
       });
     }
 
-    const user = await User.create({
+    const user = await AdminUser.create({
       username,
       password,
       role,

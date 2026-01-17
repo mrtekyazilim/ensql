@@ -1,14 +1,9 @@
 const mongoose = require('mongoose')
 
-const sessionSchema = new mongoose.Schema({
-  userId: {
+const customerSessionSchema = new mongoose.Schema({
+  customerId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    refPath: 'userType'
-  },
-  userType: {
-    type: String,
-    enum: ['AdminUser', 'Customer'],
+    ref: 'Customer',
     required: true
   },
   deviceId: {
@@ -37,7 +32,7 @@ const sessionSchema = new mongoose.Schema({
   }
 })
 
-sessionSchema.index({ userId: 1, deviceId: 1 })
-sessionSchema.index({ aktif: 1 })
+customerSessionSchema.index({ customerId: 1, deviceId: 1 })
+customerSessionSchema.index({ aktif: 1 })
 
-module.exports = mongoose.model('Session', sessionSchema)
+module.exports = mongoose.model('CustomerSession', customerSessionSchema)

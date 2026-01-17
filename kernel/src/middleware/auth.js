@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const AdminUser = require('../models/AdminUser');
+const Customer = require('../models/Customer');
 
 // JWT token doğrulama middleware
 exports.protect = async (req, res, next) => {
@@ -18,7 +19,20 @@ exports.protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select('-password');
+
+    // Token'dan role bilgisini al ve uygun modeli kullan
+    let user;
+    if (decoded.role === 'admin' || decoded.role === 'user') {
+      user = await AdminUser.findById(decoded.id).select('-password');
+    } else {
+      user = await Customer.findById(decoded.id).select('-password');
+      // Customer için role ekle (model'de yok)
+      if (user) {
+        user.role = 'customer';
+      }
+    }
+
+    req.user = user;
 
     if (!req.user) {
       return res.status(401).json({
@@ -27,8 +41,8 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // Hizmet bitiş tarihi kontrolü (client kullanıcıları için)
-    if (req.user.role === 'client' && req.user.hizmetBitisTarihi) {
+    // Hizmet bitiş tarihi kontrolü (customer için)
+    if (req.user.hizmetBitisTarihi) {
       if (new Date() > new Date(req.user.hizmetBitisTarihi)) {
         return res.status(403).json({
           success: false,

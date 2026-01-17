@@ -65,12 +65,12 @@ export function Dashboard() {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:13201/api/users', {
+      const response = await axios.get('http://localhost:13201/api/customers', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (response.data.success) {
-        const users = response.data.users
+        const users = response.data.customers
         setStats({
           totalUsers: users.length,
           activeUsers: users.filter((u: any) => u.aktif).length,
@@ -212,12 +212,12 @@ export function Dashboard() {
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center ${activity.type === 'success' ? 'bg-green-100 dark:bg-green-900' :
-                            activity.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900' :
-                              'bg-red-100 dark:bg-red-900'
+                          activity.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900' :
+                            'bg-red-100 dark:bg-red-900'
                           }`}>
                           <span className={`h-2 w-2 rounded-full ${activity.type === 'success' ? 'bg-green-600 dark:bg-green-400' :
-                              activity.type === 'warning' ? 'bg-yellow-600 dark:bg-yellow-400' :
-                                'bg-red-600 dark:bg-red-400'
+                            activity.type === 'warning' ? 'bg-yellow-600 dark:bg-yellow-400' :
+                              'bg-red-600 dark:bg-red-400'
                             }`}></span>
                         </div>
                       </div>
@@ -271,8 +271,8 @@ export function Dashboard() {
                       </div>
                       <div>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.status === 'active' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
-                            customer.status === 'expiring' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
-                              'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                          customer.status === 'expiring' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
+                            'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
                           {customer.status === 'active' ? 'Aktif' :
                             customer.status === 'expiring' ? 'Süresi Doluyor' :

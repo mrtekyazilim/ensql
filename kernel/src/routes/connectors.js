@@ -7,7 +7,7 @@ const { randomUUID } = require('crypto');
 // Kullanıcının tüm connector'larını listele
 router.get('/', protect, async (req, res) => {
   try {
-    const connectors = await Connector.find({ userId: req.user._id })
+    const connectors = await Connector.find({ customerId: req.user._id })
       .select('-clientPassword')
       .sort({ createdAt: -1 });
 
@@ -38,7 +38,7 @@ router.get('/:id', protect, async (req, res) => {
     }
 
     // Sadece kendi connector'ına erişebilir
-    if (connector.userId.toString() !== req.user._id.toString()) {
+    if (connector.customerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Bu işlem için yetkiniz yok'
@@ -83,7 +83,7 @@ router.post('/', protect, async (req, res) => {
     const clientPassword = userClientPassword || randomUUID();
 
     const connector = await Connector.create({
-      userId: req.user._id,
+      customerId: req.user._id,
       connectorName,
       clientId,
       clientPassword, // Model'de otomatik hash'lenir
@@ -125,7 +125,7 @@ router.put('/:id', protect, async (req, res) => {
     }
 
     // Sadece kendi connector'ını güncelleyebilir
-    if (connector.userId.toString() !== req.user._id.toString()) {
+    if (connector.customerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Bu işlem için yetkiniz yok'
@@ -172,7 +172,7 @@ router.delete('/:id', protect, async (req, res) => {
     }
 
     // Sadece kendi connector'ını silebilir
-    if (connector.userId.toString() !== req.user._id.toString()) {
+    if (connector.customerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Bu işlem için yetkiniz yok'

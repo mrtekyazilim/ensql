@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const AdminUser = require('./models/AdminUser');
 
 const app = express();
 
@@ -10,9 +11,33 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// İlk admin kullanıcısını oluştur
+const createDefaultAdmin = async () => {
+  try {
+    const adminCount = await AdminUser.countDocuments();
+
+    if (adminCount === 0) {
+      const defaultAdmin = new AdminUser({
+        username: 'admin',
+        password: 'admin123',
+        role: 'admin',
+        aktif: true
+      });
+
+      await defaultAdmin.save();
+      console.log('✓ Varsayılan admin kullanıcısı oluşturuldu (username: admin, password: admin123)');
+    }
+  } catch (error) {
+    console.error('Varsayılan admin oluşturulurken hata:', error.message);
+  }
+};
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB bağlantısı başarılı'))
+  .then(() => {
+    console.log('MongoDB bağlantısı başarılı');
+    createDefaultAdmin();
+  })
   .catch((err) => console.error('MongoDB bağlantı hatası:', err));
 
 // Routes
@@ -22,11 +47,12 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
+app.use('/api/customers', require('./routes/customers'));
 app.use('/api/admin-users', require('./routes/adminUsers'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/connector', require('./routes/connector'));
 app.use('/api/connectors', require('./routes/connectors'));
+app.use('/api/connector-proxy', require('./routes/connectorProxy'));
 app.use('/api/sessions', require('./routes/sessions'));
 
 // Error handling middleware
