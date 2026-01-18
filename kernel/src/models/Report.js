@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const ReportSchema = new mongoose.Schema({
-  userId: {
+  customerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Customer',
     required: true
   },
   raporAdi: {
@@ -15,9 +15,32 @@ const ReportSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  icon: {
+    type: String,
+    trim: true
+  },
+  raporTuru: {
+    type: String,
+    enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'normal-report'],
+    default: 'normal-report',
+    required: true
+  },
   sqlSorgusu: {
     type: String,
     required: [true, 'SQL sorgusu gereklidir']
+  },
+  // Parametre görünürlük ayarları
+  showDate1: {
+    type: Boolean,
+    default: false
+  },
+  showDate2: {
+    type: Boolean,
+    default: false
+  },
+  showSearch: {
+    type: Boolean,
+    default: false
   },
   parametreler: [{
     paramAdi: String,

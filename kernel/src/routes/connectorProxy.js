@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const { connectorAuth } = require('../middleware/connectorAuth');
+const { protect } = require('../middleware/auth');
+const CustomerSession = require('../models/CustomerSession');
 
 const CONNECTOR_URL = process.env.CONNECTOR_URL || 'https://kernel.connectorabi.com/api/v1';
 
@@ -218,6 +220,77 @@ router.post('/rest', connectorAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Connector rest servisi hatası',
+      error: error.response?.data || error.message
+    });
+  }
+});
+
+// ============= CUSTOMER ENDPOINTS (JWT Protected) =============
+
+// MS SQL Server - Customer authenticated endpoint
+router.post('/customer/mssql', protect, async (req, res) => {
+  try {
+    // Get active connector from customer session
+    const session = await CustomerSession.findOne({
+      customerId: req.user.id,
+      aktif: true
+    }).populate('activeConnectorId');
+
+    if (!session?.activeConnectorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aktif connector bulunamadı. Lütfen bir connector seçin.'
+      });
+    }
+
+    const connector = session.activeConnectorId;
+
+    // SQL Server config'i request body'den veya connector'dan al
+    const sqlConfig = req.body.config || connector.sqlServerConfig;
+
+    // ConnectorAbi için gerekli formatı hazırla
+    const fullConfig = {
+      user: sqlConfig.user,
+      password: sqlConfig.password,
+      database: sqlConfig.database,
+      server: sqlConfig.server,
+      port: sqlConfig.port,
+      dialect: 'mssql',
+      dialectOptions: {
+        instanceName: sqlConfig.dialectOptions?.instanceName || ''
+      },
+      options: {
+        encrypt: sqlConfig.options?.encrypt !== undefined ? sqlConfig.options.encrypt : false,
+        trustServerCertificate: sqlConfig.options?.trustServerCertificate !== undefined ? sqlConfig.options.trustServerCertificate : true
+      }
+    };
+
+    const requestBody = {
+      clientId: connector.clientId,
+      clientPass: connector.clientPassword,
+      config: fullConfig,
+      query: req.body.query
+    };
+
+    const response = await axios.post(`${CONNECTOR_URL}/mssql`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': connector.clientId,
+        'clientPass': connector.clientPassword
+      },
+      timeout: 30000
+    });
+
+    // Veri yapısı: response.data.data.recordsets[0]
+    res.json({
+      success: true,
+      data: response.data.data
+    });
+  } catch (error) {
+    console.error('Customer mssql error:', error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || 'SQL sorgusu çalıştırılamadı',
       error: error.response?.data || error.message
     });
   }

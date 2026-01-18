@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Reports } from './pages/Reports'
+import { ReportExecute } from './pages/ReportExecute'
+import { ReportDesigns } from './pages/ReportDesigns'
+import { ReportForm } from './pages/ReportForm'
 import { Settings } from './pages/Settings'
 import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
@@ -22,6 +25,10 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="reports/:id" element={<ReportExecute />} />
+            <Route path="report-designs" element={<ReportDesigns />} />
+            <Route path="report-designs/new" element={<ReportForm />} />
+            <Route path="report-designs/:id" element={<ReportForm />} />
             <Route path="connectors" element={<Connectors />} />
             <Route path="settings" element={<Settings />} />
             <Route path="sessions" element={<Sessions />} />
