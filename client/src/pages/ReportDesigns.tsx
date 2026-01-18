@@ -141,6 +141,26 @@ export function ReportDesigns() {
     }
   }
 
+  const handleReorder = async (reportId: string, direction: 'up' | 'down') => {
+    try {
+      const token = localStorage.getItem('clientToken')
+      const response = await axios.put(
+        `http://localhost:13201/api/reports/${reportId}/reorder`,
+        { direction },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+
+      if (response.data.success) {
+        toast.success('Sıralama güncellendi')
+        loadReports()
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Sıralama güncellenemedi')
+    }
+  }
+
   const handleExportClick = () => {
     setSelectedExportReports(new Set())
     setExportDialogOpen(true)
@@ -471,16 +491,22 @@ export function ReportDesigns() {
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  setReportToDelete(report)
-                  setDeleteDialogOpen(true)
-                }}
-                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                title="Sil"
-              >
-                <LucideIcons.Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleReorder(report._id, 'up')}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                  title="Yukarı Taşı"
+                >
+                  <LucideIcons.ArrowUp className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleReorder(report._id, 'down')}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                  title="Aşağı Taşı"
+                >
+                  <LucideIcons.ArrowDown className="w-5 h-5" />
+                </button>
+              </div>
               <div className="flex space-x-4">
                 <button
                   onClick={() => handleCopy(report)}
@@ -495,6 +521,16 @@ export function ReportDesigns() {
                   title="Düzenle"
                 >
                   <LucideIcons.Edit className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setReportToDelete(report)
+                    setDeleteDialogOpen(true)
+                  }}
+                  className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                  title="Sil"
+                >
+                  <LucideIcons.Trash2 className="w-5 h-5" />
                 </button>
               </div>
             </div>

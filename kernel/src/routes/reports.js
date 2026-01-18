@@ -26,7 +26,7 @@ router.get('/', protect, async (req, res) => {
 
     const reports = await Report.find(query)
       .populate('customerId', 'username')
-      .sort({ createdAt: -1 });
+      .sort({ siraNo: 1, createdAt: 1 }); // Sıra numarasına göre sırala
 
     res.json({
       success: true,
@@ -87,6 +87,13 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
+    // Kullanıcının en yüksek sıra numarasını bul
+    const maxSiraReport = await Report.findOne({ customerId: req.user.id })
+      .sort({ siraNo: -1 })
+      .select('siraNo');
+
+    const newSiraNo = maxSiraReport ? (maxSiraReport.siraNo || 0) + 1 : 1;
+
     const report = await Report.create({
       customerId: req.user.id,
       raporAdi,
@@ -99,7 +106,8 @@ router.post('/', protect, async (req, res) => {
       showSearch: showSearch || false,
       parametreler,
       goruntuAyarlari,
-      aktif: aktif !== undefined ? aktif : true
+      aktif: aktif !== undefined ? aktif : true,
+      siraNo: newSiraNo
     });
 
     res.status(201).json({
@@ -192,6 +200,126 @@ router.delete('/:id', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Delete report error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Rapor sıralamasını değiştir
+router.put('/:id/reorder', protect, async (req, res) => {
+  try {
+    const { direction } = req.body; // 'up' veya 'down'
+
+    if (!direction || !['up', 'down'].includes(direction)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Geçerli bir yön belirtin (up/down)'
+      });
+    }
+
+    const report = await Report.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rapor bulunamadı'
+      });
+    }
+
+    // Admin değilse sadece kendi raporunu sıralayabilir
+    if (req.user.role !== 'admin' && report.customerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu raporu düzenleme yetkiniz yok'
+      });
+    }
+
+    const currentSiraNo = report.siraNo || 0;
+
+    // Müşterinin tüm raporlarını getir
+    const allReports = await Report.find({
+      customerId: report.customerId
+    }).sort({ siraNo: 1, createdAt: 1 });
+
+    // Sıralaması 0 olanları düzelt (ilk sıralamada)
+    if (allReports.some(r => !r.siraNo)) {
+      for (let i = 0; i < allReports.length; i++) {
+        allReports[i].siraNo = i + 1;
+        await allReports[i].save();
+      }
+      // Güncel haliyle tekrar getir
+      const updatedReports = await Report.find({
+        customerId: report.customerId
+      }).sort({ siraNo: 1, createdAt: 1 });
+
+      const currentIndex = updatedReports.findIndex(r => r._id.toString() === report._id.toString());
+      const currentReport = updatedReports[currentIndex];
+
+      if (direction === 'up' && currentIndex > 0) {
+        // Yukarıdaki ile yer değiştir
+        const prevReport = updatedReports[currentIndex - 1];
+        const tempSiraNo = currentReport.siraNo;
+        currentReport.siraNo = prevReport.siraNo;
+        prevReport.siraNo = tempSiraNo;
+        await currentReport.save();
+        await prevReport.save();
+      } else if (direction === 'down' && currentIndex < updatedReports.length - 1) {
+        // Aşağıdaki ile yer değiştir
+        const nextReport = updatedReports[currentIndex + 1];
+        const tempSiraNo = currentReport.siraNo;
+        currentReport.siraNo = nextReport.siraNo;
+        nextReport.siraNo = tempSiraNo;
+        await currentReport.save();
+        await nextReport.save();
+      }
+
+      return res.json({
+        success: true,
+        message: 'Sıralama güncellendi'
+      });
+    }
+
+    // Mevcut raporun indexini bul
+    const currentIndex = allReports.findIndex(r => r._id.toString() === report._id.toString());
+
+    if (direction === 'up') {
+      if (currentIndex === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rapor zaten en üstte'
+        });
+      }
+      // Yukarıdaki rapor ile yer değiştir
+      const prevReport = allReports[currentIndex - 1];
+      const tempSiraNo = report.siraNo;
+      report.siraNo = prevReport.siraNo;
+      prevReport.siraNo = tempSiraNo;
+      await report.save();
+      await prevReport.save();
+    } else { // down
+      if (currentIndex === allReports.length - 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Rapor zaten en altta'
+        });
+      }
+      // Aşağıdaki rapor ile yer değiştir
+      const nextReport = allReports[currentIndex + 1];
+      const tempSiraNo = report.siraNo;
+      report.siraNo = nextReport.siraNo;
+      nextReport.siraNo = tempSiraNo;
+      await report.save();
+      await nextReport.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Sıralama güncellendi'
+    });
+  } catch (error) {
+    console.error('Reorder report error:', error);
     res.status(500).json({
       success: false,
       message: 'Sunucu hatası'

@@ -86,7 +86,12 @@ const ReportSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  sonKullanimTarihi: Date
+  sonKullanimTarihi: Date,
+  siraNo: {
+    type: Number,
+    default: 0,
+    index: true
+  }
 }, {
   timestamps: true
 });
