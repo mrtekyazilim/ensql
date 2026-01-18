@@ -19,6 +19,11 @@ const ReportSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  color: {
+    type: String,
+    trim: true,
+    default: 'blue-indigo' // blue-indigo, green-teal, purple-pink, orange-red, gray-slate
+  },
   raporTuru: {
     type: String,
     enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'normal-report'],

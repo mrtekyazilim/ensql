@@ -5,7 +5,7 @@ import { Copyright } from './Copyright'
 import { Logo } from './Logo'
 import { PWAInstallBanner } from './PWAInstallBanner'
 import { usePWAInstall } from '../hooks/usePWAInstall'
-import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download } from 'lucide-react'
+import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download, Menu, X } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
 
@@ -14,6 +14,7 @@ export function Layout() {
   const [loading, setLoading] = useState(true)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showConnectorMenu, setShowConnectorMenu] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [connectors, setConnectors] = useState<any[]>([])
   const [activeConnector, setActiveConnector] = useState<any>(null)
@@ -97,19 +98,11 @@ export function Layout() {
           const deviceId = localStorage.getItem('deviceId')
 
           try {
-            console.log('Setting active connector:', {
-              connectorId: selectedConnector._id,
-              connectorName: selectedConnector.connectorName,
-              deviceId
-            })
-
             const updateResponse = await axios.put(
               'http://localhost:13201/api/sessions/active-connector',
               { deviceId, connectorId: selectedConnector._id },
               { headers: { Authorization: `Bearer ${token}` } }
             )
-
-            console.log('Active connector update response:', updateResponse.data)
           } catch (error: any) {
             console.error('Auto-select connector error:', error)
             console.error('Error response:', error.response?.data)
@@ -137,7 +130,21 @@ export function Layout() {
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
+      // Sayfa yenileme kontrolü - Tasarım sayfalarında yenilenmez
+      const currentPath = location.pathname
+      const shouldRefresh =
+        currentPath === '/' || // Dashboard (root)
+        currentPath === '/dashboard' || // Dashboard
+        currentPath === '/reports' || // Raporlar listesi
+        currentPath.startsWith('/report/') // Rapor görüntüleme
+
       toast.success(`Aktif connector: ${connector.connectorName}`)
+
+      if (shouldRefresh) {
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+      }
     } catch (error) {
       console.error('Connector change error:', error)
       toast.error('Connector değiştirilemedi')
@@ -331,10 +338,52 @@ export function Layout() {
                   </>
                 )}
               </div>
+
+              {/* Mobile Menu Button - En Sağda */}
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="sm:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+              >
+                {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu Drawer - Sağdan Açılan */}
+      {showMobileMenu && (
+        <>
+          <div
+            className="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 sm:hidden"
+            onClick={() => setShowMobileMenu(false)}
+          />
+          <div className="fixed inset-y-0 right-0 max-w-xs w-full bg-white dark:bg-gray-800 shadow-xl z-30 sm:hidden transform transition-transform duration-300 ease-in-out">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Menü</h3>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <nav className="flex-1 px-4 py-6">
+                <a
+                  href="/reports"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                >
+                  <Database className="w-5 h-5 mr-3" />
+                  Raporlar
+                </a>
+              </nav>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Connector Selector - Mobile */}
       {connectors.length > 0 && (

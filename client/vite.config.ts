@@ -43,6 +43,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
+        navigateFallbackAllowlist: [/.*/],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        disableDevLogs: true,
+        mode: 'production',
         runtimeCaching: [
           {
             urlPattern: /^http:\/\/localhost:13201\/api\/.*/i,

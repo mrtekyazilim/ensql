@@ -54,13 +54,6 @@ export function Settings() {
             <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </button>
         </div>
-
-        {/* Diğer ayarlar için placeholder */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
-          <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-            Diğer ayarlar yakında eklenecek...
-          </p>
-        </div>
       </div>
     </div>
   )

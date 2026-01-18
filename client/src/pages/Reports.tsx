@@ -22,12 +22,34 @@ export function Reports() {
   const navigate = useNavigate()
   const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [serviceExpired, setServiceExpired] = useState(false)
 
   useEffect(() => {
+    const userData = localStorage.getItem('clientUser')
+    if (userData) {
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      // Hizmet bitiş tarihi kontrolü
+      if (parsedUser.hizmetBitisTarihi) {
+        const bitisTarihi = new Date(parsedUser.hizmetBitisTarihi)
+        const bugun = new Date()
+        if (bugun > bitisTarihi) {
+          setServiceExpired(true)
+        }
+      }
+    }
     loadReports()
   }, [])
 
   const loadReports = async () => {
+    // Hizmet süresi dolmuşsa raporları yükleme
+    if (serviceExpired) {
+      setLoading(false)
+      return
+    }
+
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.get('http://localhost:13201/api/reports', {
@@ -35,7 +57,11 @@ export function Reports() {
       })
 
       if (response.data.success) {
-        setReports(response.data.reports)
+        // Sadece normal-report türündeki raporları göster
+        const normalReports = response.data.reports.filter(
+          (r: Report) => r.raporTuru === 'normal-report'
+        )
+        setReports(normalReports)
       }
     } catch (error) {
       console.error('Reports loading error:', error)
@@ -62,70 +88,94 @@ export function Reports() {
     <div className="max-w-7xl mx-auto">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Raporlarım</h2>
 
-      {/* Reports Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reports.map((report) => (
-          <div
-            key={report._id}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-center mb-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
-                {renderIcon(report.icon)}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {report.raporAdi}
+      {/* Hizmet Süresi Dolmuş Uyarısı */}
+      {serviceExpired ? (
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg">
+          <div className="flex items-center">
+            <LucideIcons.AlertCircle className="w-6 h-6 text-red-500 mr-3" />
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-400">
+                Hizmet Süreniz Dolmuştur
               </h3>
-            </div>
-
-            {report.aciklama && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                {report.aciklama}
-              </p>
-            )}
-
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
-                  <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
-                </div>
-                {report.sonKullanimTarihi && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
-                    <span className="text-gray-900 dark:text-white">
-                      {new Date(report.sonKullanimTarihi).toLocaleString('tr-TR', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {user?.hizmetBitisTarihi && (
+                  <>Hizmet bitiş tarihiniz: {new Date(user.hizmetBitisTarihi).toLocaleDateString('tr-TR')}</>
                 )}
-              </div>
-              <button
-                onClick={() => navigate(`/reports/${report._id}`)}
-                className="flex-shrink-0 p-3 rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                title="Raporu Çalıştır"
-              >
-                <LucideIcons.Play className="w-6 h-6" />
-              </button>
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-2">
+                Hizmetinize devam etmek için lütfen yöneticinizle iletişime geçiniz.
+              </p>
             </div>
           </div>
-        ))}
+        </div>
+      ) : (
+        <>
+          {/* Reports Grid */}
+          {reports.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reports.map((report) => (
+                <div
+                  key={report._id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex items-center mb-4">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
+                      {renderIcon(report.icon)}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {report.raporAdi}
+                    </h3>
+                  </div>
 
-        {reports.length === 0 && (
-          <div className="col-span-3 text-center py-12">
-            <LucideIcons.FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Henüz rapor bulunamadı</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-              Ayarlar → Rapor Tasarımları'ndan yeni rapor oluşturabilirsiniz
-            </p>
-          </div>
-        )}
-      </div>
+                  {report.aciklama && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                      {report.aciklama}
+                    </p>
+                  )}
+
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
+                        <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
+                      </div>
+                      {report.sonKullanimTarihi && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
+                          <span className="text-gray-900 dark:text-white">
+                            {new Date(report.sonKullanimTarihi).toLocaleString('tr-TR', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => navigate(`/reports/${report._id}`)}
+                      className="flex-shrink-0 p-3 rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                      title="Raporu Çalıştır"
+                    >
+                      <LucideIcons.Play className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <LucideIcons.FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Henüz rapor bulunamadı</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                Ayarlar → Rapor Tasarımları'ndan yeni rapor oluşturabilirsiniz
+              </p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

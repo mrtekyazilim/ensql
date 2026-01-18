@@ -341,9 +341,9 @@ export function ReportDesigns() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rapor Tasarımları</h2>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Export/Import Buttons */}
           <button
             onClick={handleImportClick}
@@ -549,7 +549,7 @@ export function ReportDesigns() {
 
       {/* Pagination Controls */}
       {filteredReports.length > 0 && (
-        <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4 gap-4">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {startIndex + 1}-{Math.min(endIndex, filteredReports.length)} / {filteredReports.length} rapor
           </div>

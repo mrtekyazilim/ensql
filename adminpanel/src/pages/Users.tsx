@@ -309,7 +309,7 @@ export function Users() {
       <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {getFilteredUsers().map((user) => (
-            <li key={user._id}>
+            <li key={user._id} className="mt-2 first:mt-0">
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -331,6 +331,11 @@ export function Users() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Sorgu Sayısı: {user.kullanimIstatistikleri?.toplamSorguSayisi || 0}
                       </p>
+                      {user.kullanimIstatistikleri?.sonGirisTarihi && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Son Aktivite: {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleDateString('tr-TR')} {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isUserActive(user.hizmetBitisTarihi)
                         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                         : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'

@@ -78,7 +78,7 @@ router.get('/:id', protect, async (req, res) => {
 // Yeni rapor oluştur
 router.post('/', protect, async (req, res) => {
   try {
-    const { raporAdi, aciklama, icon, raporTuru, sqlSorgusu, showDate1, showDate2, showSearch, parametreler, goruntuAyarlari, aktif } = req.body;
+    const { raporAdi, aciklama, icon, color, raporTuru, sqlSorgusu, showDate1, showDate2, showSearch, parametreler, goruntuAyarlari, aktif } = req.body;
 
     if (!raporAdi || !sqlSorgusu) {
       return res.status(400).json({
@@ -99,6 +99,7 @@ router.post('/', protect, async (req, res) => {
       raporAdi,
       aciklama,
       icon,
+      color: color || 'blue-indigo',
       raporTuru: raporTuru || 'normal-report',
       sqlSorgusu,
       showDate1: showDate1 || false,
@@ -143,11 +144,12 @@ router.put('/:id', protect, async (req, res) => {
       });
     }
 
-    const { raporAdi, aciklama, icon, raporTuru, sqlSorgusu, showDate1, showDate2, showSearch, parametreler, goruntuAyarlari, aktif } = req.body;
+    const { raporAdi, aciklama, icon, color, raporTuru, sqlSorgusu, showDate1, showDate2, showSearch, parametreler, goruntuAyarlari, aktif } = req.body;
 
     if (raporAdi) report.raporAdi = raporAdi;
     if (aciklama !== undefined) report.aciklama = aciklama;
     if (icon !== undefined) report.icon = icon;
+    if (color !== undefined) report.color = color;
     if (raporTuru) report.raporTuru = raporTuru;
     if (sqlSorgusu) report.sqlSorgusu = sqlSorgusu;
     if (showDate1 !== undefined) report.showDate1 = showDate1;
@@ -397,12 +399,14 @@ router.post('/:id/execute', protect, async (req, res) => {
     // Use provided sqlQuery or report's default query
     const queryToRun = sqlQuery || report.sqlSorgusu;
 
-    // Debug: Log the query being executed
-    console.log('\n========== SQL QUERY DEBUG ==========');
-    console.log('Original Query:', report.sqlSorgusu);
-    console.log('Parameters:', { date1, date2, search });
-    console.log('Query to Run:', queryToRun);
-    console.log('=====================================\n');
+    // Debug: Log the query being executed (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n========== SQL QUERY DEBUG ==========');
+      console.log('Original Query:', report.sqlSorgusu);
+      console.log('Parameters:', { date1, date2, search });
+      console.log('Query to Run:', queryToRun);
+      console.log('=====================================\n');
+    }
 
     // Call ConnectorAbi /mssql endpoint
     const connectorResponse = await axios.post(

@@ -22,7 +22,6 @@ export function AutoLogin() {
         // Admin panel'den gelen deviceId'yi kullan (session admin-login-as-customer ile oluşturuldu)
         if (deviceId) {
           localStorage.setItem('deviceId', deviceId)
-          console.log('Using admin panel deviceId:', deviceId)
         }
 
         // Admin panelden geldiğini işaretle (PWA install prompt'ları gösterilmeyecek)

@@ -112,13 +112,7 @@ router.post('/client/login', async (req, res) => {
       });
     }
 
-    // Hizmet bitiş tarihi kontrolü
-    if (user.hizmetBitisTarihi && new Date() > new Date(user.hizmetBitisTarihi)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Hizmet süreniz dolmuştur'
-      });
-    }
+    // Hizmet bitiş tarihi kontrolü kaldırıldı - Dashboard'da uyarı gösteriliyor
 
     // Şifre kontrolü
     const isMatch = await user.comparePassword(password);
@@ -316,11 +310,12 @@ router.post('/admin-login-as-customer/:customerId', protect, async (req, res) =>
       });
     }
 
-    // Hizmet bitiş tarihi kontrolü
-    if (new Date(customer.hizmetBitisTarihi) < new Date()) {
+    // Admin olarak bağlanırken hizmet bitiş tarihi kontrolü yapma
+    // Sadece aktif/pasif kontrolü yap
+    if (!customer.aktif) {
       return res.status(403).json({
         success: false,
-        message: 'Hizmet süresi dolmuş'
+        message: 'Müşteri hesabı deaktif edilmiş'
       });
     }
 

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'sonner'
 import * as LucideIcons from 'lucide-react'
+import * as XLSX from 'xlsx'
 
 interface Report {
   _id: string
@@ -203,7 +204,25 @@ export function ReportExecute() {
   }
 
   const handleExportExcel = () => {
-    toast.info('Excel export özelliği yakında eklenecek')
+    if (results.length === 0) {
+      toast.error('Dışa aktarılacak veri yok')
+      return
+    }
+
+    // Worksheet oluştur
+    const worksheet = XLSX.utils.json_to_sheet(results)
+
+    // Workbook oluştur
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, report?.raporAdi || 'Rapor')
+
+    // Dosya adı
+    const fileName = `${report?.raporAdi || 'rapor'}_${new Date().toISOString().split('T')[0]}.xlsx`
+
+    // Excel dosyasını indir
+    XLSX.writeFile(workbook, fileName)
+
+    toast.success('Excel dosyası indirildi')
   }
 
   const handleExportCSV = () => {
@@ -268,63 +287,66 @@ export function ReportExecute() {
 
       {/* Report Header */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
-              {renderIcon(report.icon)}
+        <div className="mb-4">
+          {/* Başlık ve Export Butonları */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
+                {renderIcon(report.icon)}
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {report.raporAdi}
+                </h2>
+                {report.aciklama && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {report.aciklama}
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {report.raporAdi}
-              </h2>
-              {report.aciklama && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {report.aciklama}
-                </p>
-              )}
+
+            {/* Export & Page Size - Geniş ekranda sağda */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleExportExcel}
+                disabled={results.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Excel'e Aktar"
+              >
+                <LucideIcons.FileSpreadsheet className="w-4 h-4 mr-2" />
+                Excel
+              </button>
+              <button
+                onClick={handleExportCSV}
+                disabled={results.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="CSV'ye Aktar"
+              >
+                <LucideIcons.FileText className="w-4 h-4 mr-2" />
+                CSV
+              </button>
+
+              <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+
+              <LucideIcons.Rows className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+                <option value={1000}>1000</option>
+              </select>
             </div>
-          </div>
-
-          {/* Export & Page Size */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportExcel}
-              disabled={results.length === 0}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Excel'e Aktar"
-            >
-              <LucideIcons.FileSpreadsheet className="w-4 h-4 mr-2" />
-              Excel
-            </button>
-            <button
-              onClick={handleExportCSV}
-              disabled={results.length === 0}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="CSV'ye Aktar"
-            >
-              <LucideIcons.FileText className="w-4 h-4 mr-2" />
-              CSV
-            </button>
-
-            <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-2"></div>
-
-            <LucideIcons.Rows className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value))
-                setCurrentPage(1)
-              }}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-              <option value={500}>500</option>
-              <option value={1000}>1000</option>
-            </select>
           </div>
         </div>
 
@@ -336,10 +358,10 @@ export function ReportExecute() {
             </h4>
 
             <div className={`grid grid-cols-1 gap-4 ${report.showDate1 && report.showDate2 && report.showSearch
-                ? 'md:grid-cols-4'
-                : report.showDate1 && report.showDate2
-                  ? 'md:grid-cols-3'
-                  : 'md:grid-cols-3'
+              ? 'md:grid-cols-4'
+              : report.showDate1 && report.showDate2
+                ? 'md:grid-cols-3'
+                : 'md:grid-cols-3'
               }`}>
               {/* Kolay Tarih Seçimi - Sadece her iki tarih de aktifse göster */}
               {report.showDate1 && report.showDate2 && (
@@ -476,9 +498,9 @@ export function ReportExecute() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             {/* Sol: Export Butonları */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleExportExcel}
                 disabled={results.length === 0}
@@ -502,7 +524,10 @@ export function ReportExecute() {
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 {startIndex + 1}-{Math.min(endIndex, results.length)} / {results.length}
               </span>
+            </div>
 
+            {/* Sağ: Pagination Kontrolleri */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}

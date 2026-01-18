@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'sonner'
 import * as LucideIcons from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 
 interface ReportFormData {
   raporAdi: string
   aciklama: string
   icon: string
+  color: string
   raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'normal-report'
   sqlSorgusu: string
   showDate1: boolean
@@ -32,7 +34,26 @@ const POPULAR_ICONS = [
   'Database', 'Table', 'List', 'Grid', 'Layers', 'Package',
   'ShoppingCart', 'Users', 'User', 'UserCheck', 'DollarSign', 'CreditCard',
   'Calendar', 'Clock', 'AlertCircle', 'CheckCircle', 'XCircle', 'Info',
-  'Settings', 'Filter', 'Search', 'Download', 'Upload', 'FileSpreadsheet'
+  'Settings', 'Filter', 'Search', 'Download', 'Upload', 'FileSpreadsheet',
+  'BookOpen', 'Briefcase', 'Building', 'Clipboard', 'Code', 'Cpu',
+  'Edit', 'Eye', 'FolderOpen', 'Globe', 'Hash', 'Heart', 'Home',
+  'Inbox', 'Key', 'Link', 'Lock', 'Mail', 'Map', 'MessageSquare',
+  'Monitor', 'Moon', 'Paperclip', 'Phone', 'Plus', 'Printer', 'RefreshCw',
+  'Save', 'Send', 'Server', 'Share', 'Shield', 'Star', 'Sun',
+  'Tag', 'Target', 'Terminal', 'Trash', 'TrendingDown', 'Truck', 'Unlock',
+  'Video', 'Volume2', 'Wifi', 'Zap', 'Archive', 'Award', 'Bell',
+  'Bookmark', 'Box', 'Camera', 'Folder', 'ArrowUp', 'ArrowDown'
+]
+
+const COLOR_THEMES = [
+  { value: 'blue-indigo', label: 'Mavi - İndigo', from: 'from-blue-500', to: 'to-indigo-600', darkFrom: 'dark:from-blue-600', darkTo: 'dark:to-indigo-950' },
+  { value: 'green-teal', label: 'Yeşil - Turkuaz', from: 'from-green-500', to: 'to-teal-600', darkFrom: 'dark:from-green-600', darkTo: 'dark:to-teal-950' },
+  { value: 'purple-pink', label: 'Mor - Pembe', from: 'from-purple-500', to: 'to-pink-600', darkFrom: 'dark:from-purple-600', darkTo: 'dark:to-pink-950' },
+  { value: 'orange-red', label: 'Turuncu - Kırmızı', from: 'from-orange-500', to: 'to-red-600', darkFrom: 'dark:from-orange-600', darkTo: 'dark:to-red-950' },
+  { value: 'gray-slate', label: 'Gri - Kurşuni', from: 'from-gray-500', to: 'to-slate-600', darkFrom: 'dark:from-gray-600', darkTo: 'dark:to-slate-950' },
+  { value: 'cyan-blue', label: 'Cyan - Mavi', from: 'from-cyan-500', to: 'to-blue-600', darkFrom: 'dark:from-cyan-600', darkTo: 'dark:to-blue-950' },
+  { value: 'amber-orange', label: 'Amber - Turuncu', from: 'from-amber-500', to: 'to-orange-600', darkFrom: 'dark:from-amber-600', darkTo: 'dark:to-orange-950' },
+  { value: 'rose-red', label: 'Gül - Kırmızı', from: 'from-rose-500', to: 'to-red-600', darkFrom: 'dark:from-rose-600', darkTo: 'dark:to-red-950' }
 ]
 
 export function ReportForm() {
@@ -63,6 +84,7 @@ export function ReportForm() {
     raporAdi: '',
     aciklama: '',
     icon: 'FileText',
+    color: 'blue-indigo',
     raporTuru: 'normal-report',
     sqlSorgusu: '',
     showDate1: false,
@@ -91,6 +113,7 @@ export function ReportForm() {
           raporAdi: report.raporAdi,
           aciklama: report.aciklama || '',
           icon: report.icon || 'FileText',
+          color: report.color || 'blue-indigo',
           raporTuru: report.raporTuru,
           sqlSorgusu: report.sqlSorgusu,
           showDate1: report.showDate1 || false,
@@ -365,7 +388,7 @@ export function ReportForm() {
                         <LucideIcons.X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-6 gap-2 max-h-64 overflow-y-auto">
+                    <div className="grid grid-cols-6 gap-2 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-500">
                       {POPULAR_ICONS.map((iconName) => {
                         const IconComponent = (LucideIcons as any)[iconName]
                         return (
@@ -400,6 +423,41 @@ export function ReportForm() {
                 )}
               </div>
             </div>
+
+            {/* Renk Seçici (Dashboard Scalar için) */}
+            {formData.raporTuru === 'dashboard-scalar' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Renk Teması
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {COLOR_THEMES.map((theme) => {
+                    const isSelected = formData.color === theme.value
+                    return (
+                      <button
+                        key={theme.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, color: theme.value })}
+                        className={`relative p-4 rounded-lg border-2 transition-all ${isSelected
+                          ? 'border-blue-600 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                          }`}
+                      >
+                        <div className={`h-12 rounded-md bg-gradient-to-br ${theme.from} ${theme.to} ${theme.darkFrom} ${theme.darkTo} mb-2`}></div>
+                        <p className="text-xs font-medium text-gray-900 dark:text-white text-center">
+                          {theme.label}
+                        </p>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 bg-blue-600 dark:bg-blue-400 rounded-full p-1">
+                            <LucideIcons.Check className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Açıklama */}
             <div>
@@ -756,15 +814,15 @@ export function ReportForm() {
               {/* Dashboard Skalar Değer - Card Preview */}
               {formData.raporTuru === 'dashboard-scalar' && (
                 <div className="mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-950 rounded-lg shadow-lg p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="p-2 bg-white/20 rounded-lg">
+                  <div className={`bg-gradient-to-br ${COLOR_THEMES.find(t => t.value === formData.color)?.from || 'from-blue-500'} ${COLOR_THEMES.find(t => t.value === formData.color)?.to || 'to-indigo-600'} ${COLOR_THEMES.find(t => t.value === formData.color)?.darkFrom || 'dark:from-blue-600'} ${COLOR_THEMES.find(t => t.value === formData.color)?.darkTo || 'dark:to-indigo-950'} rounded-lg shadow-lg p-6`}>
+                    <div className="flex items-center mb-4">
+                      <div className="p-2 bg-white/20 rounded-lg text-white mr-3">
                         {renderIcon(formData.icon)}
                       </div>
+                      <h4 className="text-white text-lg font-semibold">
+                        {formData.raporAdi || 'Skalar Değer'}
+                      </h4>
                     </div>
-                    <h4 className="text-white text-sm font-medium mb-2">
-                      {formData.raporAdi || 'Skalar Değer'}
-                    </h4>
                     <p className="text-3xl font-bold text-white">
                       {testResults[0] && Object.values(testResults[0])[0] !== null
                         ? String(Object.values(testResults[0])[0])
@@ -782,9 +840,90 @@ export function ReportForm() {
                 </div>
               )}
 
+              {/* Dashboard Pasta Grafik - Pie Chart Preview */}
+              {formData.raporTuru === 'dashboard-pie' && (() => {
+                // Veriyi pie chart formatına dönüştür: [{ name: string, value: number }]
+                let chartData = testResults.map(row => {
+                  const entries = Object.entries(row)
+                  const name = entries[0] ? String(entries[0][1]) : '-'
+                  const value = entries[1] ? Number(entries[1][1]) || 0 : 0
+                  return { name, value }
+                })
+
+                // Büyükten küçüğe sırala
+                chartData.sort((a, b) => b.value - a.value)
+
+                // İlk 5'i al, geri kalanları "Diğer" olarak topla
+                if (chartData.length > 5) {
+                  const top5 = chartData.slice(0, 5)
+                  const others = chartData.slice(5)
+                  const othersTotal = others.reduce((sum, item) => sum + item.value, 0)
+
+                  if (othersTotal > 0) {
+                    chartData = [...top5, { name: 'Diğer', value: othersTotal }]
+                  } else {
+                    chartData = top5
+                  }
+                }
+
+                const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#06b6d4', '#f97316']
+
+                return (
+                  <div className="mb-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+                      <div className="flex items-center mb-4">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400 mr-3">
+                          {renderIcon(formData.icon)}
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {formData.raporAdi || 'Pasta Grafik'}
+                        </h4>
+                      </div>
+                      {formData.aciklama && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{formData.aciklama}</p>
+                      )}
+                      <div className="h-[20rem] sm:h-[22rem]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={chartData}
+                              cx="50%"
+                              cy="35%"
+                              labelLine={false}
+                              outerRadius={90}
+                              fill="#8884d8"
+                              dataKey="value"
+                            >
+                              {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '0.375rem'
+                              }}
+                            />
+                            <Legend
+                              verticalAlign="bottom"
+                              height={36}
+                              wrapperStyle={{ paddingTop: '0px', marginTop: '-40px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                      <strong>Not:</strong> Dashboard'da bu görünümde gösterilecek. İlk sütun etiket (string), ikinci sütun değer (sayısal) olmalıdır. En büyük 5 değer gösterilir, geri kalanlar "Diğer" olarak toplanır.
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Normal Rapor / Liste - Tablo Görünümü */}
-              {(formData.raporTuru === 'normal-report' || formData.raporTuru === 'dashboard-list' || formData.raporTuru === 'dashboard-pie') && (
-                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+              {(formData.raporTuru === 'normal-report' || formData.raporTuru === 'dashboard-list') && (
+                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-500">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
