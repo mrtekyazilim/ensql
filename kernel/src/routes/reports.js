@@ -222,13 +222,30 @@ router.post('/:id/execute', protect, async (req, res) => {
     // Get parameters from request body
     const { date1, date2, search, sqlQuery } = req.body;
 
+    console.log('Report execute request for user:', {
+      userId: req.user.id,
+      reportId: req.params.id
+    })
+
     // Find active session with connector info
     const session = await CustomerSession.findOne({
       customerId: req.user.id,
       aktif: true
     }).populate('activeConnectorId');
 
+    console.log('Session found:', session ? {
+      sessionId: session._id,
+      customerId: session.customerId,
+      deviceId: session.deviceId,
+      activeConnectorId: session.activeConnectorId,
+      activeConnectorPopulated: !!session.activeConnectorId
+    } : 'NOT FOUND')
+
     if (!session || !session.activeConnectorId) {
+      console.error('Session or connector missing:', {
+        sessionExists: !!session,
+        activeConnectorId: session?.activeConnectorId
+      })
       return res.status(400).json({
         success: false,
         message: 'Aktif connector bulunamadı. Lütfen önce bir connector seçin.'

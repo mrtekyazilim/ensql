@@ -29,6 +29,7 @@ export function ReportExecute() {
   const [date1, setDate1] = useState('')
   const [date2, setDate2] = useState('')
   const [search, setSearch] = useState('')
+  const [quickDate, setQuickDate] = useState('ozel')
 
   // Results
   const [results, setResults] = useState<any[]>([])
@@ -62,6 +63,84 @@ export function ReportExecute() {
       navigate('/reports')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleQuickDateChange = (value: string) => {
+    setQuickDate(value)
+
+    const today = new Date()
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    switch (value) {
+      case 'bugun':
+        setDate1(formatDate(today))
+        setDate2(formatDate(today))
+        break
+
+      case 'dun':
+        const yesterday = new Date(today)
+        yesterday.setDate(yesterday.getDate() - 1)
+        setDate1(formatDate(yesterday))
+        setDate2(formatDate(yesterday))
+        break
+
+      case 'bu-hafta':
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - today.getDay() + 1) // Pazartesi
+        setDate1(formatDate(weekStart))
+        setDate2(formatDate(today))
+        break
+
+      case 'bu-ay':
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+        setDate1(formatDate(monthStart))
+        setDate2(formatDate(today))
+        break
+
+      case 'gecen-ay':
+        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
+        setDate1(formatDate(lastMonthStart))
+        setDate2(formatDate(lastMonthEnd))
+        break
+
+      case 'son-3-ay':
+        const threeMonthsAgo = new Date(today)
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+        setDate1(formatDate(threeMonthsAgo))
+        setDate2(formatDate(today))
+        break
+
+      case 'son-6-ay':
+        const sixMonthsAgo = new Date(today)
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+        setDate1(formatDate(sixMonthsAgo))
+        setDate2(formatDate(today))
+        break
+
+      case 'bu-yil':
+        const yearStart = new Date(today.getFullYear(), 0, 1)
+        setDate1(formatDate(yearStart))
+        setDate2(formatDate(today))
+        break
+
+      case 'son-1-yil':
+        const oneYearAgo = new Date(today)
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+        setDate1(formatDate(oneYearAgo))
+        setDate2(formatDate(today))
+        break
+
+      case 'ozel':
+      default:
+        // Özel seçildiğinde tarihleri değiştirme
+        break
     }
   }
 
@@ -256,7 +335,37 @@ export function ReportExecute() {
               Filtreler
             </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 gap-4 ${report.showDate1 && report.showDate2 && report.showSearch
+                ? 'md:grid-cols-4'
+                : report.showDate1 && report.showDate2
+                  ? 'md:grid-cols-3'
+                  : 'md:grid-cols-3'
+              }`}>
+              {/* Kolay Tarih Seçimi - Sadece her iki tarih de aktifse göster */}
+              {report.showDate1 && report.showDate2 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Kolay Tarih Seçimi
+                  </label>
+                  <select
+                    value={quickDate}
+                    onChange={(e) => handleQuickDateChange(e.target.value)}
+                    className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  >
+                    <option value="bugun">Bugün</option>
+                    <option value="dun">Dün</option>
+                    <option value="bu-hafta">Bu Hafta</option>
+                    <option value="bu-ay">Bu Ay</option>
+                    <option value="gecen-ay">Geçen Ay</option>
+                    <option value="son-3-ay">Son 3 Ay</option>
+                    <option value="son-6-ay">Son 6 Ay</option>
+                    <option value="bu-yil">Bu Yıl</option>
+                    <option value="son-1-yil">Son 1 Yıl</option>
+                    <option value="ozel">Özel</option>
+                  </select>
+                </div>
+              )}
+
               {report.showDate1 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -265,7 +374,10 @@ export function ReportExecute() {
                   <input
                     type="date"
                     value={date1}
-                    onChange={(e) => setDate1(e.target.value)}
+                    onChange={(e) => {
+                      setDate1(e.target.value)
+                      setQuickDate('ozel')
+                    }}
                     className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
@@ -279,7 +391,10 @@ export function ReportExecute() {
                   <input
                     type="date"
                     value={date2}
-                    onChange={(e) => setDate2(e.target.value)}
+                    onChange={(e) => {
+                      setDate2(e.target.value)
+                      setQuickDate('ozel')
+                    }}
                     className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>

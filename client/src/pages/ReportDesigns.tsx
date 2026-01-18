@@ -33,6 +33,9 @@ export function ReportDesigns() {
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
+  const [showCopyDialog, setShowCopyDialog] = useState(false)
+  const [reportToCopy, setReportToCopy] = useState<Report | null>(null)
+  const [copyName, setCopyName] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
@@ -40,6 +43,8 @@ export function ReportDesigns() {
   const [selectedExportReports, setSelectedExportReports] = useState<Set<string>>(new Set())
   const [selectedImportReports, setSelectedImportReports] = useState<Set<string>>(new Set())
   const [importedReports, setImportedReports] = useState<Report[]>([])
+  const [filterType, setFilterType] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     loadReports()
@@ -89,19 +94,30 @@ export function ReportDesigns() {
     }
   }
 
-  const handleCopy = async (report: Report) => {
+  const handleCopy = (report: Report) => {
+    setReportToCopy(report)
+    setCopyName(`${report.raporAdi} - Kopya`)
+    setShowCopyDialog(true)
+  }
+
+  const handleCopyConfirm = async () => {
+    if (!reportToCopy || !copyName.trim()) {
+      toast.error('Rapor adı boş olamaz')
+      return
+    }
+
     try {
       const token = localStorage.getItem('clientToken')
 
       const copyData = {
-        raporAdi: `${report.raporAdi} - Kopya 1`,
-        aciklama: report.aciklama,
-        icon: report.icon,
-        raporTuru: report.raporTuru,
-        sqlSorgusu: report.sqlSorgusu,
-        showDate1: report.showDate1,
-        showDate2: report.showDate2,
-        showSearch: report.showSearch,
+        raporAdi: copyName.trim(),
+        aciklama: reportToCopy.aciklama,
+        icon: reportToCopy.icon,
+        raporTuru: reportToCopy.raporTuru,
+        sqlSorgusu: reportToCopy.sqlSorgusu,
+        showDate1: reportToCopy.showDate1,
+        showDate2: reportToCopy.showDate2,
+        showSearch: reportToCopy.showSearch,
         aktif: false
       }
 
@@ -115,6 +131,9 @@ export function ReportDesigns() {
 
       if (response.data.success) {
         toast.success('Rapor kopyalandı')
+        setShowCopyDialog(false)
+        setReportToCopy(null)
+        setCopyName('')
         loadReports()
       }
     } catch (error: any) {
@@ -267,11 +286,24 @@ export function ReportDesigns() {
     return <IconComponent className="w-6 h-6" />
   }
 
+  // Filtreleme
+  const filteredReports = reports.filter(report => {
+    // Tip filtreleme
+    if (filterType !== 'all' && report.raporTuru !== filterType) {
+      return false
+    }
+    // İsim filtreleme
+    if (searchQuery && !report.raporAdi.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false
+    }
+    return true
+  })
+
   // Pagination calculations
-  const totalPages = Math.ceil(reports.length / pageSize)
+  const totalPages = Math.ceil(filteredReports.length / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const currentReports = reports.slice(startIndex, endIndex)
+  const currentReports = filteredReports.slice(startIndex, endIndex)
 
   // Reset to page 1 when page size changes
   const handlePageSizeChange = (newSize: number) => {
@@ -329,6 +361,68 @@ export function ReportDesigns() {
             Yeni Rapor
           </button>
         </div>
+      </div>
+
+      {/* Filtre Paneli */}
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-4">
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Filtreler</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Rapor Türü
+            </label>
+            <select
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            >
+              <option value="all">Tüm Türler</option>
+              {REPORT_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Rapor Adı
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rapor adı ara..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 pl-10 pr-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+              <LucideIcons.Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+            </div>
+          </div>
+        </div>
+        {(filterType !== 'all' || searchQuery) && (
+          <div className="mt-3 flex items-center justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">
+              {filteredReports.length} rapor bulundu
+            </span>
+            <button
+              onClick={() => {
+                setFilterType('all')
+                setSearchQuery('')
+                setCurrentPage(1)
+              }}
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+            >
+              Filtreleri Temizle
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Reports Grid */}
@@ -407,19 +501,21 @@ export function ReportDesigns() {
           </div>
         ))}
 
-        {reports.length === 0 && (
+        {filteredReports.length === 0 && (
           <div className="col-span-3 text-center py-12">
             <LucideIcons.FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Henüz rapor oluşturulmamış</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              {reports.length === 0 ? 'Henüz rapor oluşturulmamış' : 'Filtreye uygun rapor bulunamadı'}
+            </p>
           </div>
         )}
       </div>
 
       {/* Pagination Controls */}
-      {reports.length > 0 && (
+      {filteredReports.length > 0 && (
         <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            {startIndex + 1}-{Math.min(endIndex, reports.length)} / {reports.length} rapor
+            {startIndex + 1}-{Math.min(endIndex, filteredReports.length)} / {filteredReports.length} rapor
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -607,6 +703,58 @@ export function ReportDesigns() {
                   İçe Aktar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Dialog */}
+      {showCopyDialog && reportToCopy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Rapor Kopyala</h3>
+            </div>
+
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                "{reportToCopy.raporAdi}" raporunun kopyası oluşturulacak. Yeni rapor adını girin:
+              </p>
+              <input
+                type="text"
+                value={copyName}
+                onChange={(e) => setCopyName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCopyConfirm()
+                  } else if (e.key === 'Escape') {
+                    setShowCopyDialog(false)
+                  }
+                }}
+                placeholder="Yeni rapor adı"
+                autoFocus
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-700">
+              <button
+                onClick={() => {
+                  setShowCopyDialog(false)
+                  setReportToCopy(null)
+                  setCopyName('')
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleCopyConfirm}
+                disabled={!copyName.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Kopyala
+              </button>
             </div>
           </div>
         </div>

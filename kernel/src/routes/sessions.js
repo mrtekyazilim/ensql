@@ -118,6 +118,13 @@ router.put('/active-connector', protect, async (req, res) => {
   try {
     const { deviceId, connectorId } = req.body
 
+    console.log('Active connector update request:', {
+      userId: req.user._id,
+      userRole: req.user.role,
+      deviceId,
+      connectorId
+    })
+
     if (!deviceId) {
       return res.status(400).json({
         success: false,
@@ -139,6 +146,8 @@ router.put('/active-connector', protect, async (req, res) => {
       aktif: true
     })
 
+    console.log('Found session:', session ? { id: session._id, customerId: session.customerId } : 'NOT FOUND')
+
     if (!session) {
       return res.status(404).json({
         success: false,
@@ -149,6 +158,8 @@ router.put('/active-connector', protect, async (req, res) => {
     session.activeConnectorId = connectorId || null
     session.lastActivity = new Date()
     await session.save()
+
+    console.log('Session updated with activeConnectorId:', connectorId)
 
     res.json({
       success: true,

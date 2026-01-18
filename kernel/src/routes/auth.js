@@ -326,6 +326,13 @@ router.post('/admin-login-as-customer/:customerId', protect, async (req, res) =>
 
     // Session kaydı oluştur
     if (deviceId) {
+      // Önce bu müşterinin tüm aktif session'larını pasif yap
+      await CustomerSession.updateMany(
+        { customerId: customer._id, aktif: true },
+        { aktif: false }
+      );
+
+      // Yeni session oluştur
       await CustomerSession.findOneAndUpdate(
         { customerId: customer._id, deviceId },
         {

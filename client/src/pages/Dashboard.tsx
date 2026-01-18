@@ -1,14 +1,167 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
+import * as LucideIcons from 'lucide-react'
+import { toast } from 'sonner'
+
+interface DashboardReport {
+  _id: string
+  raporAdi: string
+  aciklama: string
+  icon: string
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie'
+  sqlSorgusu: string
+}
 
 export function Dashboard() {
   const [user, setUser] = useState<any>(null)
+  const [dashboardReports, setDashboardReports] = useState<DashboardReport[]>([])
+  const [reportData, setReportData] = useState<Record<string, any[]>>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const userData = localStorage.getItem('clientUser')
     if (userData) {
       setUser(JSON.parse(userData))
     }
+    loadDashboardReports()
   }, [])
+
+  const loadDashboardReports = async () => {
+    try {
+      const token = localStorage.getItem('clientToken')
+      const response = await axios.get('http://localhost:13201/api/reports', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        // Sadece dashboard türündeki aktif raporları filtrele
+        const dashboardReports = response.data.reports.filter(
+          (r: any) => r.aktif && (r.raporTuru === 'dashboard-scalar' || r.raporTuru === 'dashboard-list' || r.raporTuru === 'dashboard-pie')
+        )
+        setDashboardReports(dashboardReports)
+
+        // Her rapor için veri yükle
+        dashboardReports.forEach((report: DashboardReport) => {
+          loadReportData(report._id)
+        })
+      }
+    } catch (error) {
+      console.error('Dashboard reports loading error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadReportData = async (reportId: string) => {
+    try {
+      const token = localStorage.getItem('clientToken')
+      const response = await axios.post(
+        `http://localhost:13201/api/reports/${reportId}/execute`,
+        { date1: '', date2: '', search: '' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success && response.data.data) {
+        setReportData(prev => ({ ...prev, [reportId]: response.data.data }))
+      }
+    } catch (error) {
+      console.error(`Report ${reportId} data loading error:`, error)
+    }
+  }
+
+  const renderIcon = (iconName: string) => {
+    const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.FileText
+    return <IconComponent className="w-6 h-6" />
+  }
+
+  const renderDashboardReport = (report: DashboardReport) => {
+    const data = reportData[report._id] || []
+
+    if (report.raporTuru === 'dashboard-scalar') {
+      const value = data[0] && Object.values(data[0])[0] !== null ? String(Object.values(data[0])[0]) : '0'
+      return (
+        <div key={report._id} className="bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-950 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+          <div className="flex items-center justify-between mb-2">
+            <div className="p-2 bg-white/20 rounded-lg text-white">
+              {renderIcon(report.icon)}
+            </div>
+          </div>
+          <h4 className="text-white text-sm font-medium mb-2">{report.raporAdi}</h4>
+          <p className="text-3xl font-bold text-white">{value}</p>
+          {report.aciklama && (
+            <p className="text-white/80 text-xs mt-2">{report.aciklama}</p>
+          )}
+        </div>
+      )
+    }
+
+    if (report.raporTuru === 'dashboard-list') {
+      return (
+        <div key={report._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
+              {renderIcon(report.icon)}
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{report.raporAdi}</h4>
+          </div>
+          {report.aciklama && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.aciklama}</p>
+          )}
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {data.slice(0, 5).map((row, idx) => (
+              <div key={idx} className="text-sm border-b border-gray-200 dark:border-gray-700 pb-2">
+                {Object.entries(row).map(([key, value], i) => (
+                  <div key={i} className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">{key}:</span>
+                    <span className="text-gray-900 dark:text-white font-medium">
+                      {value !== null && value !== undefined ? String(value) : '-'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {data.length > 5 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">+{data.length - 5} daha...</p>
+          )}
+        </div>
+      )
+    }
+
+    if (report.raporTuru === 'dashboard-pie') {
+      return (
+        <div key={report._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400 mr-3">
+              {renderIcon(report.icon)}
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{report.raporAdi}</h4>
+          </div>
+          {report.aciklama && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.aciklama}</p>
+          )}
+          <div className="space-y-2">
+            {data.slice(0, 5).map((row, idx) => {
+              const entries = Object.entries(row)
+              const label = entries[0] ? String(entries[0][1]) : '-'
+              const value = entries[1] ? String(entries[1][1]) : '0'
+              return (
+                <div key={idx} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700 dark:text-gray-300">{label}</span>
+                  <span className="font-semibold text-purple-600 dark:text-purple-400">{value}</span>
+                </div>
+              )
+            })}
+          </div>
+          {data.length > 5 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">+{data.length - 5} daha...</p>
+          )}
+        </div>
+      )
+    }
+
+    return null
+  }
 
   return (
     <div>
@@ -28,6 +181,18 @@ export function Dashboard() {
         </div>
       </div>
 
+      {/* Dashboard Raporları */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <LucideIcons.Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      ) : dashboardReports.length > 0 ? (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          {dashboardReports.map(report => renderDashboardReport(report))}
+        </div>
+      ) : null}
+
+      {/* Hızlı Erişim Kartları */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer">
           <div className="p-5">

@@ -21,14 +21,41 @@ export function Layout() {
   const { isInstallable, isFromAdminPanel, install } = usePWAInstall()
 
   useEffect(() => {
-    const token = localStorage.getItem('clientToken')
-    setIsAuthenticated(!!token)
-    setLoading(false)
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('clientToken')
+      setIsAuthenticated(!!token)
+      setLoading(false)
 
-    if (token) {
-      loadCurrentUser()
-      loadConnectors()
+      if (token) {
+        // DeviceId kontrolü - yoksa oluştur, admin-panel deviceId'si varsa kullan
+        let deviceId = localStorage.getItem('deviceId')
+        if (!deviceId) {
+          // Client app'den normal login için deviceId oluştur
+          deviceId = crypto.randomUUID()
+          localStorage.setItem('deviceId', deviceId)
+
+          // Backend'e yeni session oluştur
+          try {
+            await axios.post('http://localhost:13201/api/sessions/create', {
+              deviceId,
+              deviceName: 'Client App',
+              browserInfo: navigator.userAgent
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+            console.log('New session created with deviceId:', deviceId)
+          } catch (error) {
+            console.error('Session create error:', error)
+          }
+        }
+        // Admin-panel deviceId varsa kullan (session zaten oluşturulmuş)
+
+        loadCurrentUser()
+        loadConnectors()
+      }
     }
+
+    initializeAuth()
   }, [])
 
   const loadCurrentUser = () => {
@@ -50,10 +77,42 @@ export function Layout() {
 
         // localStorage'dan aktif connector'ı yükle
         const savedConnectorId = localStorage.getItem('activeConnectorId')
+        let selectedConnector = null
+
         if (savedConnectorId) {
-          const connector = response.data.connectors.find((c: any) => c._id === savedConnectorId)
-          if (connector) {
-            setActiveConnector(connector)
+          selectedConnector = response.data.connectors.find((c: any) => c._id === savedConnectorId)
+        }
+
+        // Eğer kaydedilmiş connector yoksa veya bulunamadıysa, ilk connector'ı seç
+        if (!selectedConnector && response.data.connectors.length > 0) {
+          selectedConnector = response.data.connectors[0]
+          localStorage.setItem('activeConnectorId', selectedConnector._id)
+        }
+
+        // Her durumda backend session'ı güncelle
+        if (selectedConnector) {
+          setActiveConnector(selectedConnector)
+
+          const token = localStorage.getItem('clientToken')
+          const deviceId = localStorage.getItem('deviceId')
+
+          try {
+            console.log('Setting active connector:', {
+              connectorId: selectedConnector._id,
+              connectorName: selectedConnector.connectorName,
+              deviceId
+            })
+
+            const updateResponse = await axios.put(
+              'http://localhost:13201/api/sessions/active-connector',
+              { deviceId, connectorId: selectedConnector._id },
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+
+            console.log('Active connector update response:', updateResponse.data)
+          } catch (error: any) {
+            console.error('Auto-select connector error:', error)
+            console.error('Error response:', error.response?.data)
           }
         }
       }

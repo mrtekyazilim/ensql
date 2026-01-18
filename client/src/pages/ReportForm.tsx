@@ -753,36 +753,68 @@ export function ReportForm() {
         {
           testResults.length > 0 ? (
             <div>
-              <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      {Object.keys(testResults[0]).map((key) => (
-                        <th
-                          key={key}
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider"
-                        >
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {currentResults.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        {Object.values(row).map((value, cellIdx) => (
-                          <td
-                            key={cellIdx}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+              {/* Dashboard Skalar Değer - Card Preview */}
+              {formData.raporTuru === 'dashboard-scalar' && (
+                <div className="mb-6">
+                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-950 rounded-lg shadow-lg p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        {renderIcon(formData.icon)}
+                      </div>
+                    </div>
+                    <h4 className="text-white text-sm font-medium mb-2">
+                      {formData.raporAdi || 'Skalar Değer'}
+                    </h4>
+                    <p className="text-3xl font-bold text-white">
+                      {testResults[0] && Object.values(testResults[0])[0] !== null
+                        ? String(Object.values(testResults[0])[0])
+                        : '0'}
+                    </p>
+                    {formData.aciklama && (
+                      <p className="text-white/80 text-xs mt-2">
+                        {formData.aciklama}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Not:</strong> Dashboard'da bu görünümde gösterilecek. İlk satırın ilk sütunu kullanılır.
+                  </div>
+                </div>
+              )}
+
+              {/* Normal Rapor / Liste - Tablo Görünümü */}
+              {(formData.raporTuru === 'normal-report' || formData.raporTuru === 'dashboard-list' || formData.raporTuru === 'dashboard-pie') && (
+                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        {Object.keys(testResults[0]).map((key) => (
+                          <th
+                            key={key}
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider"
                           >
-                            {value !== null && value !== undefined ? String(value) : '-'}
-                          </td>
+                            {key}
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {currentResults.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          {Object.values(row).map((value, cellIdx) => (
+                            <td
+                              key={cellIdx}
+                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                            >
+                              {value !== null && value !== undefined ? String(value) : '-'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
