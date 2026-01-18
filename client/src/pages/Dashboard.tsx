@@ -13,12 +13,19 @@ export function Dashboard() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Hoş Geldiniz</h2>
-        {user && (
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Kullanıcı: {user.username}
-          </p>
-        )}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Hoş Geldiniz</h2>
+          {user && (
+            <div className="text-right">
+              <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                {user.companyName}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                @{user.username}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

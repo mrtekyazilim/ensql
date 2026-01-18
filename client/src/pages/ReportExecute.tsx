@@ -33,6 +33,15 @@ export function ReportExecute() {
   // Results
   const [results, setResults] = useState<any[]>([])
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+
+  const totalPages = Math.ceil(results.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const currentResults = results.slice(startIndex, endIndex)
+
   useEffect(() => {
     loadReport()
   }, [id])
@@ -72,18 +81,16 @@ export function ReportExecute() {
       // Replace parameters in SQL query
       let sqlQuery = report.sqlSorgusu
 
-      if (report.showDate1) {
-        sqlQuery = sqlQuery.replace(/@date1/g, date1 ? `'${date1}'` : "''")
-      }
+      // Always replace all parameters, even if not shown in form
+      // Date1
+      sqlQuery = sqlQuery.replace(/@date1/g, date1 ? `'${date1}'` : "''")
 
-      if (report.showDate2) {
-        sqlQuery = sqlQuery.replace(/@date2/g, date2 ? `'${date2}'` : "''")
-      }
+      // Date2
+      sqlQuery = sqlQuery.replace(/@date2/g, date2 ? `'${date2}'` : "''")
 
-      if (report.showSearch) {
-        const escapedSearch = search ? escapeSqlString(search) : ''
-        sqlQuery = sqlQuery.replace(/@search/g, `'${escapedSearch}'`)
-      }
+      // Search
+      const escapedSearch = search ? escapeSqlString(search) : ''
+      sqlQuery = sqlQuery.replace(/@search/g, `'${escapedSearch}'`)
 
       const response = await axios.post(
         `http://localhost:13201/api/reports/${report._id}/execute`,
@@ -100,6 +107,7 @@ export function ReportExecute() {
 
       if (response.data.success) {
         setResults(response.data.data || [])
+        setCurrentPage(1) // Reset to first page on new results
         toast.success('Rapor başarıyla çalıştırıldı')
       }
     } catch (error: any) {
@@ -113,6 +121,41 @@ export function ReportExecute() {
   const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.FileText
     return <IconComponent className="w-6 h-6" />
+  }
+
+  const handleExportExcel = () => {
+    toast.info('Excel export özelliği yakında eklenecek')
+  }
+
+  const handleExportCSV = () => {
+    if (results.length === 0) {
+      toast.error('Dışa aktarılacak veri yok')
+      return
+    }
+
+    // CSV oluştur
+    const headers = Object.keys(results[0])
+    const csvContent = [
+      headers.join(','),
+      ...results.map(row =>
+        headers.map(header => {
+          const value = row[header]
+          const stringValue = value !== null && value !== undefined ? String(value) : ''
+          // CSV için tırnak içine al (virgül veya tırnak varsa)
+          return stringValue.includes(',') || stringValue.includes('"')
+            ? `"${stringValue.replace(/"/g, '""')}"`
+            : stringValue
+        }).join(',')
+      )
+    ].join('\n')
+
+    // Download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${report?.raporAdi || 'rapor'}_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    toast.success('CSV dosyası indirildi')
   }
 
   if (loading) {
@@ -146,48 +189,72 @@ export function ReportExecute() {
 
       {/* Report Header */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 mb-6">
-        <div className="flex items-center mb-4">
-          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
-            {renderIcon(report.icon)}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
+              {renderIcon(report.icon)}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {report.raporAdi}
+              </h2>
+              {report.aciklama && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {report.aciklama}
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {report.raporAdi}
-            </h2>
-            {report.aciklama && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {report.aciklama}
-              </p>
-            )}
+
+          {/* Export & Page Size */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportExcel}
+              disabled={results.length === 0}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Excel'e Aktar"
+            >
+              <LucideIcons.FileSpreadsheet className="w-4 h-4 mr-2" />
+              Excel
+            </button>
+            <button
+              onClick={handleExportCSV}
+              disabled={results.length === 0}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="CSV'ye Aktar"
+            >
+              <LucideIcons.FileText className="w-4 h-4 mr-2" />
+              CSV
+            </button>
+
+            <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+
+            <LucideIcons.Rows className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setCurrentPage(1)
+              }}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+              <option value={500}>500</option>
+              <option value={1000}>1000</option>
+            </select>
           </div>
         </div>
 
         {/* Filtreler */}
         {(report.showDate1 || report.showDate2 || report.showSearch) && (
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                Filtreler
-              </h4>
-              <button
-                type="button"
-                onClick={handleExecuteReport}
-                disabled={executing}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {executing ? (
-                  <>
-                    <LucideIcons.Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Yükleniyor...
-                  </>
-                ) : (
-                  <>
-                    <LucideIcons.List className="w-4 h-4 mr-2" />
-                    Listele
-                  </>
-                )}
-              </button>
-            </div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              Filtreler
+            </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {report.showDate1 && (
@@ -233,29 +300,28 @@ export function ReportExecute() {
                 </div>
               )}
             </div>
-          </div>
-        )}
 
-        {!report.showDate1 && !report.showDate2 && !report.showSearch && (
-          <div className="text-center py-4">
-            <button
-              type="button"
-              onClick={handleExecuteReport}
-              disabled={executing}
-              className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {executing ? (
-                <>
-                  <LucideIcons.Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Yükleniyor...
-                </>
-              ) : (
-                <>
-                  <LucideIcons.List className="w-5 h-5 mr-2" />
-                  Raporu Listele
-                </>
-              )}
-            </button>
+            {/* Listele Butonu */}
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={handleExecuteReport}
+                disabled={executing}
+                className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {executing ? (
+                  <>
+                    <LucideIcons.Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Yükleniyor...
+                  </>
+                ) : (
+                  <>
+                    <LucideIcons.List className="w-5 h-5 mr-2" />
+                    Listele
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -263,23 +329,11 @@ export function ReportExecute() {
       {/* Results */}
       {results.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Rapor Sonuçları ({results.length} kayıt)
-            </h3>
-            <button
-              onClick={() => setResults([])}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              Temizle
-            </button>
-          </div>
-
           <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  {Object.keys(results[0]).map((key) => (
+                  {Object.keys(currentResults[0]).map((key) => (
                     <th
                       key={key}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider"
@@ -290,7 +344,7 @@ export function ReportExecute() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {results.map((row, rowIndex) => (
+                {currentResults.map((row, rowIndex) => (
                   <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     {Object.values(row).map((value: any, colIndex) => (
                       <td
@@ -304,6 +358,76 @@ export function ReportExecute() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            {/* Sol: Export Butonları */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportExcel}
+                disabled={results.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Excel'e Aktar"
+              >
+                <LucideIcons.FileSpreadsheet className="w-4 h-4 mr-2" />
+                Excel
+              </button>
+              <button
+                onClick={handleExportCSV}
+                disabled={results.length === 0}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="CSV'ye Aktar"
+              >
+                <LucideIcons.FileText className="w-4 h-4 mr-2" />
+                CSV
+              </button>
+
+              <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {startIndex + 1}-{Math.min(endIndex, results.length)} / {results.length}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="İlk Sayfa"
+              >
+                <LucideIcons.ChevronsLeft className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Önceki Sayfa"
+              >
+                <LucideIcons.ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Sonraki Sayfa"
+              >
+                <LucideIcons.ChevronRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Son Sayfa"
+              >
+                <LucideIcons.ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}

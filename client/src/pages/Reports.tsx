@@ -84,28 +84,35 @@ export function Reports() {
               </p>
             )}
 
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
-                <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
-              </div>
-              {report.sonKullanimTarihi && (
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
-                  <span className="text-gray-900 dark:text-white">
-                    {new Date(report.sonKullanimTarihi).toLocaleDateString('tr-TR')}
-                  </span>
+                  <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
+                  <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
                 </div>
-              )}
+                {report.sonKullanimTarihi && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
+                    <span className="text-gray-900 dark:text-white">
+                      {new Date(report.sonKullanimTarihi).toLocaleString('tr-TR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => navigate(`/reports/${report._id}`)}
+                className="flex-shrink-0 p-3 rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                title="Raporu Çalıştır"
+              >
+                <LucideIcons.Play className="w-6 h-6" />
+              </button>
             </div>
-
-            <button
-              onClick={() => navigate(`/reports/${report._id}`)}
-              className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
-            >
-              <LucideIcons.Play className="w-4 h-4 mr-2" />
-              Çalıştır
-            </button>
           </div>
         ))}
 

@@ -13,8 +13,7 @@ const ConnectorSchema = new mongoose.Schema({
   },
   clientId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   clientPassword: {
     type: String,

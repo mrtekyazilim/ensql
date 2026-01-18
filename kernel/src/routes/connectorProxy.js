@@ -287,11 +287,25 @@ router.post('/customer/mssql', protect, async (req, res) => {
       data: response.data.data
     });
   } catch (error) {
-    console.error('Customer mssql error:', error.response?.data || error.message);
+    console.error('Customer mssql error - Full error:', error);
+    console.error('Customer mssql error - Response data:', error.response?.data);
+    console.error('Customer mssql error - Response status:', error.response?.status);
+
+    // ConnectorAbi'den gelen hata yapısını al
+    const errorData = error.response?.data;
+
+    // ConnectorAbi hatası: { success: false, error: { name: 'RequestError', message: '...' } }
+    const sqlError = errorData?.error;
+    const errorMessage = sqlError?.message || errorData?.message || 'SQL sorgusu çalıştırılamadı';
+
     res.status(500).json({
       success: false,
-      message: error.response?.data?.message || 'SQL sorgusu çalıştırılamadı',
-      error: error.response?.data || error.message
+      message: errorMessage,
+      error: {
+        name: sqlError?.name || errorData?.name || 'DatabaseError',
+        message: errorMessage,
+        details: errorData
+      }
     });
   }
 });

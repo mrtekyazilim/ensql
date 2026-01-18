@@ -27,6 +27,9 @@ export function Connectors() {
   const [editingConnector, setEditingConnector] = useState<Connector | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [connectorToDelete, setConnectorToDelete] = useState<string | null>(null)
+  const [showCopyDialog, setShowCopyDialog] = useState(false)
+  const [connectorToCopy, setConnectorToCopy] = useState<Connector | null>(null)
+  const [copyName, setCopyName] = useState('')
   const [showClientPassword, setShowClientPassword] = useState(false)
   const [showSqlPassword, setShowSqlPassword] = useState(false)
   const [testingConnector, setTestingConnector] = useState<string | null>(null)
@@ -188,6 +191,45 @@ export function Connectors() {
     })
     setEditMode(true)
     setShowModal(true)
+  }
+
+  const handleCopyConnector = (connector: Connector) => {
+    setConnectorToCopy(connector)
+    setCopyName(`${connector.connectorName} - Kopya`)
+    setShowCopyDialog(true)
+  }
+
+  const handleCopyConfirm = async () => {
+    if (!connectorToCopy || !copyName.trim()) {
+      toast.error('Connector adı gereklidir')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('clientToken')
+      const response = await axios.post(
+        'http://localhost:13201/api/connectors',
+        {
+          connectorName: copyName.trim(),
+          clientId: connectorToCopy.clientId,
+          clientPassword: connectorToCopy.clientPassword,
+          sqlServerConfig: connectorToCopy.sqlServerConfig
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+
+      if (response.data.success) {
+        toast.success('Connector başarıyla kopyalandı!')
+        loadConnectors()
+        setShowCopyDialog(false)
+        setConnectorToCopy(null)
+        setCopyName('')
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Connector kopyalanamadı')
+    }
   }
 
   const resetForm = () => {
@@ -414,8 +456,16 @@ export function Connectors() {
                   <CheckCircle className="w-4 h-4" />
                 </button>
                 <button
+                  onClick={() => handleCopyConnector(connector)}
+                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                  title="Kopyala"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => handleEditConnector(connector)}
                   className="p-2 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 rounded"
+                  title="Düzenle"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
@@ -425,6 +475,7 @@ export function Connectors() {
                     setShowDeleteDialog(true)
                   }}
                   className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                  title="Sil"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -770,6 +821,56 @@ export function Connectors() {
         confirmText="Evet, Sil"
         cancelText="İptal"
       />
+
+      {/* Copy Dialog */}
+      {showCopyDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Connector Kopyala</h3>
+            </div>
+
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                "{connectorToCopy?.connectorName}" connector'ının kopyası için yeni bir isim girin:
+              </p>
+              <input
+                type="text"
+                value={copyName}
+                onChange={(e) => setCopyName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCopyConfirm()
+                  }
+                }}
+                placeholder="Connector adı"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3 bg-gray-50 dark:bg-gray-700">
+              <button
+                onClick={() => {
+                  setShowCopyDialog(false)
+                  setConnectorToCopy(null)
+                  setCopyName('')
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleCopyConfirm}
+                disabled={!copyName.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

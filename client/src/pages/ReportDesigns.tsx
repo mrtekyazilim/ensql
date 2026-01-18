@@ -6,6 +6,9 @@ import * as LucideIcons from 'lucide-react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 
 interface Report {
+  showDate1: any
+  showDate2: any
+  showSearch: any
   _id: string
   raporAdi: string
   aciklama: string
@@ -30,6 +33,13 @@ export function ReportDesigns() {
   const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [selectedExportReports, setSelectedExportReports] = useState<Set<string>>(new Set())
+  const [selectedImportReports, setSelectedImportReports] = useState<Set<string>>(new Set())
+  const [importedReports, setImportedReports] = useState<Report[]>([])
 
   useEffect(() => {
     loadReports()
@@ -79,9 +89,194 @@ export function ReportDesigns() {
     }
   }
 
+  const handleCopy = async (report: Report) => {
+    try {
+      const token = localStorage.getItem('clientToken')
+
+      const copyData = {
+        raporAdi: `${report.raporAdi} - Kopya 1`,
+        aciklama: report.aciklama,
+        icon: report.icon,
+        raporTuru: report.raporTuru,
+        sqlSorgusu: report.sqlSorgusu,
+        showDate1: report.showDate1,
+        showDate2: report.showDate2,
+        showSearch: report.showSearch,
+        aktif: false
+      }
+
+      const response = await axios.post(
+        'http://localhost:13201/api/reports',
+        copyData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+
+      if (response.data.success) {
+        toast.success('Rapor kopyalandı')
+        loadReports()
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Kopya oluşturulamadı')
+    }
+  }
+
+  const handleExportClick = () => {
+    setSelectedExportReports(new Set())
+    setExportDialogOpen(true)
+  }
+
+  const handleExportToggle = (reportId: string) => {
+    const newSelected = new Set(selectedExportReports)
+    if (newSelected.has(reportId)) {
+      newSelected.delete(reportId)
+    } else {
+      newSelected.add(reportId)
+    }
+    setSelectedExportReports(newSelected)
+  }
+
+  const handleExportToggleAll = () => {
+    if (selectedExportReports.size === reports.length) {
+      setSelectedExportReports(new Set())
+    } else {
+      setSelectedExportReports(new Set(reports.map(r => r._id)))
+    }
+  }
+
+  const handleExportConfirm = () => {
+    if (selectedExportReports.size === 0) {
+      toast.error('Lütfen en az bir rapor seçin')
+      return
+    }
+
+    const selectedReportData = reports
+      .filter(r => selectedExportReports.has(r._id))
+      .map(r => ({
+        raporAdi: r.raporAdi,
+        aciklama: r.aciklama,
+        icon: r.icon,
+        raporTuru: r.raporTuru,
+        sqlSorgusu: r.sqlSorgusu,
+        showDate1: r.showDate1,
+        showDate2: r.showDate2,
+        showSearch: r.showSearch,
+        aktif: r.aktif
+      }))
+
+    const jsonString = JSON.stringify(selectedReportData, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ensql-raporlar-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`${selectedExportReports.size} rapor dışa aktarıldı`)
+    setExportDialogOpen(false)
+  }
+
+  const handleImportClick = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string)
+          if (!Array.isArray(data)) {
+            toast.error('Geçersiz dosya formatı')
+            return
+          }
+          setImportedReports(data)
+          setSelectedImportReports(new Set(data.map((_, i) => i.toString())))
+          setImportDialogOpen(true)
+        } catch (error) {
+          toast.error('Dosya okunamadı')
+        }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }
+
+  const handleImportToggle = (index: string) => {
+    const newSelected = new Set(selectedImportReports)
+    if (newSelected.has(index)) {
+      newSelected.delete(index)
+    } else {
+      newSelected.add(index)
+    }
+    setSelectedImportReports(newSelected)
+  }
+
+  const handleImportToggleAll = () => {
+    if (selectedImportReports.size === importedReports.length) {
+      setSelectedImportReports(new Set())
+    } else {
+      setSelectedImportReports(new Set(importedReports.map((_, i) => i.toString())))
+    }
+  }
+
+  const handleImportConfirm = async () => {
+    if (selectedImportReports.size === 0) {
+      toast.error('Lütfen en az bir rapor seçin')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('clientToken')
+      let successCount = 0
+
+      for (const index of Array.from(selectedImportReports)) {
+        const report = importedReports[parseInt(index)]
+        try {
+          const response = await axios.post(
+            'http://localhost:13201/api/reports',
+            report,
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          )
+          if (response.data.success) {
+            successCount++
+          }
+        } catch (error) {
+          console.error(`Import error for ${report.raporAdi}:`, error)
+        }
+      }
+
+      toast.success(`${successCount} rapor içe aktarıldı`)
+      setImportDialogOpen(false)
+      loadReports()
+    } catch (error: any) {
+      toast.error('İçe aktarma sırasında hata oluştu')
+    }
+  }
+
   const renderIcon = (iconName: string) => {
     const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.FileText
     return <IconComponent className="w-6 h-6" />
+  }
+
+  // Pagination calculations
+  const totalPages = Math.ceil(reports.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const currentReports = reports.slice(startIndex, endIndex)
+
+  // Reset to page 1 when page size changes
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize)
+    setCurrentPage(1)
   }
 
   if (loading) {
@@ -96,48 +291,61 @@ export function ReportDesigns() {
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rapor Tasarımları</h2>
-        <button
-          onClick={() => navigate('/report-designs/new')}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
-        >
-          <LucideIcons.Plus className="w-4 h-4 mr-2" />
-          Yeni Rapor
-        </button>
+        <div className="flex items-center space-x-4">
+          {/* Export/Import Buttons */}
+          <button
+            onClick={handleImportClick}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            <LucideIcons.Upload className="w-4 h-4 mr-2" />
+            İçe Aktar
+          </button>
+          <button
+            onClick={handleExportClick}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+          >
+            <LucideIcons.Download className="w-4 h-4 mr-2" />
+            Dışa Aktar
+          </button>
+          {/* Page Size Selector */}
+          <div className="flex items-center space-x-2">
+            <LucideIcons.Rows className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <button
+            onClick={() => navigate('/report-designs/new')}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            <LucideIcons.Plus className="w-4 h-4 mr-2" />
+            Yeni Rapor
+          </button>
+        </div>
       </div>
 
       {/* Reports Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {reports.map((report) => (
+        {currentReports.map((report) => (
           <div
             key={report._id}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+            <div className="flex items-center mb-4">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
                 {renderIcon(report.icon)}
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => navigate(`/report-designs/${report._id}`)}
-                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                >
-                  <LucideIcons.Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => {
-                    setReportToDelete(report)
-                    setDeleteDialogOpen(true)
-                  }}
-                  className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                >
-                  <LucideIcons.Trash2 className="w-5 h-5" />
-                </button>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {report.raporAdi}
+              </h3>
             </div>
-
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              {report.raporAdi}
-            </h3>
 
             {report.aciklama && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
@@ -145,7 +353,7 @@ export function ReportDesigns() {
               </p>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Tür:</span>
                 <span className="text-gray-900 dark:text-white font-medium">
@@ -155,8 +363,8 @@ export function ReportDesigns() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Durum:</span>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${report.aktif
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
                   }`}>
                   {report.aktif ? 'Yayında' : 'Taslak'}
                 </span>
@@ -164,6 +372,36 @@ export function ReportDesigns() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
                 <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setReportToDelete(report)
+                  setDeleteDialogOpen(true)
+                }}
+                className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                title="Sil"
+              >
+                <LucideIcons.Trash2 className="w-5 h-5" />
+              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => handleCopy(report)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                  title="Kopyala"
+                >
+                  <LucideIcons.Copy className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => navigate(`/report-designs/${report._id}`)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                  title="Düzenle"
+                >
+                  <LucideIcons.Edit className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
@@ -177,6 +415,48 @@ export function ReportDesigns() {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {reports.length > 0 && (
+        <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {startIndex + 1}-{Math.min(endIndex, reports.length)} / {reports.length} rapor
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <LucideIcons.ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <LucideIcons.ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+              Sayfa {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <LucideIcons.ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <LucideIcons.ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={deleteDialogOpen}
@@ -185,6 +465,152 @@ export function ReportDesigns() {
         description={`"${reportToDelete?.raporAdi}" raporunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         onConfirm={handleDelete}
       />
+
+      {/* Export Dialog */}
+      {exportDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Raporları Dışa Aktar</h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {/* Select All */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+                <span className="font-medium text-gray-900 dark:text-white">Tümünü Seç</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedExportReports.size === reports.length}
+                    onChange={handleExportToggleAll}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {/* Report List */}
+              <div className="space-y-2">
+                {reports.map((report) => (
+                  <div
+                    key={report._id}
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white">{report.raporAdi}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {REPORT_TYPES.find(t => t.value === report.raporTuru)?.label}
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedExportReports.has(report._id)}
+                        onChange={() => handleExportToggle(report._id)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedExportReports.size} rapor seçildi
+              </span>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setExportDialogOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleExportConfirm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
+                >
+                  Dışa Aktar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Dialog */}
+      {importDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Raporları İçe Aktar</h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {/* Select All */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+                <span className="font-medium text-gray-900 dark:text-white">Tümünü Seç</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedImportReports.size === importedReports.length}
+                    onChange={handleImportToggleAll}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              {/* Report List */}
+              <div className="space-y-2">
+                {importedReports.map((report, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-white">{report.raporAdi}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        {REPORT_TYPES.find(t => t.value === report.raporTuru)?.label}
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedImportReports.has(index.toString())}
+                        onChange={() => handleImportToggle(index.toString())}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedImportReports.size} rapor seçildi
+              </span>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setImportDialogOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleImportConfirm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600"
+                >
+                  İçe Aktar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
