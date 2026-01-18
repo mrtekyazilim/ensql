@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { Moon, Sun } from 'lucide-react'
 import { Logo } from './Logo'
 import { useTheme } from './ThemeProvider'
-import { cn } from '@/lib/utils'
 
 export function Header() {
   const { theme, setTheme } = useTheme()

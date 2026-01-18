@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import { ChevronRight, BookOpen, Rocket, FileText, Code, Plug } from 'lucide-react'
 
 export function Docs() {
