@@ -60,7 +60,7 @@ router.get('/:id', protect, async (req, res) => {
 // Yeni müşteri oluştur (admin only)
 router.post('/', protect, adminOnly, async (req, res) => {
   try {
-    const { companyName, username, password, hizmetBitisTarihi } = req.body;
+    const { companyName, username, password, hizmetBitisTarihi, iletisimBilgileri } = req.body;
 
     if (!companyName || !username || !password) {
       return res.status(400).json({
@@ -92,6 +92,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
       username,
       password, // Model'de otomatik hash'lenir
       hizmetBitisTarihi: bitisTarihi,
+      iletisimBilgileri: iletisimBilgileri || {},
       aktif: true
     });
 
@@ -117,7 +118,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
 // Müşteri güncelle (admin only)
 router.put('/:id', protect, adminOnly, async (req, res) => {
   try {
-    const { companyName, username, password, hizmetBitisTarihi, aktif } = req.body;
+    const { companyName, username, password, hizmetBitisTarihi, aktif, iletisimBilgileri } = req.body;
 
     const customer = await Customer.findById(req.params.id);
 
@@ -134,6 +135,7 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     if (password) customer.password = password; // Model'de otomatik hash'lenir
     if (hizmetBitisTarihi) customer.hizmetBitisTarihi = hizmetBitisTarihi;
     if (typeof aktif !== 'undefined') customer.aktif = aktif;
+    if (iletisimBilgileri !== undefined) customer.iletisimBilgileri = iletisimBilgileri;
 
     await customer.save();
 

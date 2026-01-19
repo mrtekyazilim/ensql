@@ -22,8 +22,17 @@ const CustomerSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  // İletişim Bilgileri (Opsiyonel)
+  iletisimBilgileri: {
+    yetkiliKisi: { type: String, trim: true },
+    cepTelefonu: { type: String, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+    faturaAdresi: { type: String, trim: true },
+    sehir: { type: String, trim: true }
+  },
   kullanimIstatistikleri: {
     toplamSorguSayisi: { type: Number, default: 0 },
+    son30GunSorguSayisi: { type: Number, default: 0 },
     sonGirisTarihi: Date,
     olusturmaTarihi: { type: Date, default: Date.now }
   },

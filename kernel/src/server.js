@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const AdminUser = require('./models/AdminUser');
+const responseTimeMiddleware = require('./middleware/responseTime');
 
 const app = express();
 
@@ -10,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(responseTimeMiddleware);
 
 // İlk admin kullanıcısını oluştur
 const createDefaultAdmin = async () => {
@@ -54,6 +56,8 @@ app.use('/api/connector', require('./routes/connector'));
 app.use('/api/connectors', require('./routes/connectors'));
 app.use('/api/connector-proxy', require('./routes/connectorProxy'));
 app.use('/api/sessions', require('./routes/sessions'));
+app.use('/api/activities', require('./routes/activities'));
+app.use('/api/metrics', require('./routes/metrics'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

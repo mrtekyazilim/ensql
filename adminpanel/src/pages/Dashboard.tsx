@@ -9,20 +9,31 @@ interface Stats {
   totalQueries: number
 }
 
+interface SystemMetrics {
+  averageResponseTime: number
+  activeSessions: number
+  totalRequests24h: number
+  serverStatus: string
+}
+
 interface Activity {
-  id: number
-  user: string
-  action: string
-  time: string
-  type: 'success' | 'warning' | 'error'
+  _id: string
+  customerName: string
+  description: string
+  createdAt: string
+  type: 'success' | 'warning' | 'error' | 'info'
 }
 
 interface Customer {
-  id: number
-  name: string
-  lastActive: string
-  queries: number
-  status: 'active' | 'expiring' | 'inactive'
+  _id: string
+  companyName: string
+  username: string
+  kullanimIstatistikleri: {
+    toplamSorguSayisi: number
+    sonGirisTarihi: Date
+  }
+  aktif: boolean
+  hizmetBitisTarihi: Date
 }
 
 export function Dashboard() {
@@ -32,34 +43,20 @@ export function Dashboard() {
     totalReports: 0,
     totalQueries: 0
   })
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([])
+  const [topCustomers, setTopCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
-
-  // Dummy data - gerçek API'ye bağlanacak
-  const recentActivities: Activity[] = [
-    { id: 1, user: 'Acme Corp', action: 'Satış raporu çalıştırıldı', time: '5 dakika önce', type: 'success' },
-    { id: 2, user: 'Tech Solutions', action: 'Yeni sorgu oluşturuldu', time: '15 dakika önce', type: 'success' },
-    { id: 3, user: 'Global Trade', action: 'Hizmet süresi yenilendi', time: '1 saat önce', type: 'warning' },
-    { id: 4, user: 'Digital Agency', action: 'Bağlantı hatası', time: '2 saat önce', type: 'error' },
-    { id: 5, user: 'Retail Plus', action: 'Dashboard görüntülendi', time: '3 saat önce', type: 'success' },
-  ]
-
-  const topCustomers: Customer[] = [
-    { id: 1, name: 'Acme Corporation', lastActive: '5 dk önce', queries: 2847, status: 'active' },
-    { id: 2, name: 'Tech Solutions Inc', lastActive: '15 dk önce', queries: 1923, status: 'active' },
-    { id: 3, name: 'Global Trade Ltd', lastActive: '1 saat önce', queries: 1456, status: 'expiring' },
-    { id: 4, name: 'Digital Agency', lastActive: '2 saat önce', queries: 982, status: 'active' },
-    { id: 5, name: 'Retail Plus', lastActive: '1 gün önce', queries: 654, status: 'inactive' },
-  ]
-
-  const systemStats = [
-    { label: 'Sunucu Durumu', value: 'Çevrimiçi', color: 'green', icon: Database },
-    { label: 'Ortalama Yanıt Süresi', value: '142ms', color: 'blue', icon: Clock },
-    { label: 'Aktif Oturumlar', value: '23', color: 'purple', icon: TrendingUp },
-    { label: 'Bekleyen İşlemler', value: '0', color: 'gray', icon: AlertCircle },
-  ]
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics>({
+    averageResponseTime: 0,
+    activeSessions: 0,
+    totalRequests24h: 0,
+    serverStatus: 'online'
+  })
 
   useEffect(() => {
     loadStats()
+    loadActivities()
+    loadSystemMetrics()
   }, [])
 
   const loadStats = async () => {
@@ -71,18 +68,97 @@ export function Dashboard() {
 
       if (response.data.success) {
         const users = response.data.customers
+
+        // Son 30 günlük sorgu sayısını hesapla
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        const last30DaysQueries = users.reduce((sum: number, u: any) => {
+          const userQueries = u.kullanimIstatistikleri?.son30GunSorguSayisi || 0
+          return sum + userQueries
+        }, 0)
+
         setStats({
           totalUsers: users.length,
           activeUsers: users.filter((u: any) => u.aktif).length,
           totalReports: 0, // TODO: API'den çekilecek
-          totalQueries: users.reduce((sum: number, u: any) => sum + (u.kullanimIstatistikleri?.toplamSorguSayisi || 0), 0)
+          totalQueries: last30DaysQueries
         })
+
+        // En aktif müşterileri belirle
+        const sortedCustomers = [...users]
+          .sort((a: any, b: any) => {
+            const aQueries = a.kullanimIstatistikleri?.toplamSorguSayisi || 0
+            const bQueries = b.kullanimIstatistikleri?.toplamSorguSayisi || 0
+            return bQueries - aQueries
+          })
+          .slice(0, 5)
+
+        setTopCustomers(sortedCustomers)
       }
     } catch (error) {
       console.error('Stats loading error:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadActivities = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get('http://localhost:13201/api/activities?limit=5', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        setRecentActivities(response.data.activities)
+      }
+    } catch (error) {
+      console.error('Activities loading error:', error)
+    }
+  }
+
+  const loadSystemMetrics = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get('http://localhost:13201/api/metrics', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        setSystemMetrics(response.data.metrics)
+      }
+    } catch (error) {
+      console.error('Metrics loading error:', error)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Az önce'
+    if (diffMins < 60) return `${diffMins} dakika önce`
+    if (diffHours < 24) return `${diffHours} saat önce`
+    if (diffDays < 7) return `${diffDays} gün önce`
+
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
+  }
+
+  const getCustomerStatus = (customer: Customer): 'active' | 'expiring' | 'inactive' => {
+    if (!customer.aktif) return 'inactive'
+
+    const now = new Date()
+    const serviceEnd = new Date(customer.hizmetBitisTarihi)
+    const daysUntilExpiry = Math.floor((serviceEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (daysUntilExpiry < 0) return 'inactive'
+    if (daysUntilExpiry <= 7) return 'expiring'
+    return 'active'
   }
 
   if (loading) {
@@ -104,7 +180,7 @@ export function Dashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-blue-100 truncate">Toplam Kullanıcı</dt>
+                  <dt className="text-sm font-medium text-blue-100 truncate">Toplam Müşteri</dt>
                   <dd className="text-3xl font-bold text-white">{stats.totalUsers}</dd>
                 </dl>
               </div>
@@ -122,7 +198,7 @@ export function Dashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-green-100 truncate">Aktif Kullanıcı</dt>
+                  <dt className="text-sm font-medium text-green-100 truncate">Aktif Müşteri</dt>
                   <dd className="text-3xl font-bold text-white">{stats.activeUsers}</dd>
                 </dl>
               </div>
@@ -158,7 +234,7 @@ export function Dashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-purple-100 truncate">Toplam Sorgu</dt>
+                  <dt className="text-sm font-medium text-purple-100 truncate">Son 30 Gün Sorgu</dt>
                   <dd className="text-3xl font-bold text-white">{stats.totalQueries}</dd>
                 </dl>
               </div>
@@ -169,32 +245,81 @@ export function Dashboard() {
 
       {/* Sistem Durumu Kartları */}
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {systemStats.map((stat, index) => {
-          const Icon = stat.icon
-          const colorClasses = {
-            green: 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400',
-            blue: 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400',
-            purple: 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400',
-            gray: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
-          }
-          return (
-            <div key={index} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className={`flex-shrink-0 rounded-md p-3 ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{stat.label}</dt>
-                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stat.value}</dd>
-                    </dl>
-                  </div>
-                </div>
+        {/* Sunucu Durumu */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 rounded-md p-3 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400">
+                <Database className="h-6 w-6" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Sunucu Durumu</dt>
+                  <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {systemMetrics.serverStatus === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'}
+                  </dd>
+                </dl>
               </div>
             </div>
-          )
-        })}
+          </div>
+        </div>
+
+        {/* Ortalama Yanıt Süresi */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 rounded-md p-3 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
+                <Clock className="h-6 w-6" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Ortalama Yanıt Süresi</dt>
+                  <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {systemMetrics.averageResponseTime > 0 ? `${systemMetrics.averageResponseTime}ms` : 'N/A'}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Aktif Oturumlar */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 rounded-md p-3 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Aktif Oturumlar</dt>
+                  <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {systemMetrics.activeSessions}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Toplam İstek (24 saat) */}
+        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 rounded-md p-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Toplam İstek (24s)</dt>
+                  <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {systemMetrics.totalRequests24h}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Alt Bölüm: Son Aktiviteler ve En Çok Kullanan Müşteriler */}
@@ -208,7 +333,7 @@ export function Dashboard() {
             <div className="flow-root">
               <ul className="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
                 {recentActivities.map((activity) => (
-                  <li key={activity.id} className="py-4">
+                  <li key={activity._id} className="py-4">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center ${activity.type === 'success' ? 'bg-green-100 dark:bg-green-900' :
@@ -223,15 +348,15 @@ export function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {activity.user}
+                          {activity.customerName}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                          {activity.action}
+                          {activity.description}
                         </p>
                       </div>
                       <div>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {activity.time}
+                          {formatDate(activity.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -241,7 +366,7 @@ export function Dashboard() {
             </div>
             <div className="mt-6">
               <a
-                href="#"
+                href="/reports"
                 className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 Tümünü Görüntüle
@@ -258,30 +383,37 @@ export function Dashboard() {
             </h3>
             <div className="flow-root">
               <ul className="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
-                {topCustomers.map((customer) => (
-                  <li key={customer.id} className="py-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {customer.name}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {customer.queries} sorgu • {customer.lastActive}
-                        </p>
+                {topCustomers.map((customer) => {
+                  const status = getCustomerStatus(customer)
+                  const lastActive = customer.kullanimIstatistikleri?.sonGirisTarihi
+                    ? formatDate(customer.kullanimIstatistikleri.sonGirisTarihi.toString())
+                    : 'Hiç giriş yapmadı'
+
+                  return (
+                    <li key={customer._id} className="py-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {customer.companyName || customer.username}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {customer.kullanimIstatistikleri?.toplamSorguSayisi || 0} sorgu • {lastActive}
+                          </p>
+                        </div>
+                        <div>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status === 'active' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+                            status === 'expiring' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
+                              'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                            }`}>
+                            {status === 'active' ? 'Aktif' :
+                              status === 'expiring' ? 'Süresi Doluyor' :
+                                'Pasif'}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.status === 'active' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
-                          customer.status === 'expiring' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
-                            'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                          }`}>
-                          {customer.status === 'active' ? 'Aktif' :
-                            customer.status === 'expiring' ? 'Süresi Doluyor' :
-                              'Pasif'}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
             <div className="mt-6">

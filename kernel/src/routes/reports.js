@@ -5,6 +5,7 @@ const Report = require('../models/Report');
 const Customer = require('../models/Customer');
 const CustomerSession = require('../models/CustomerSession');
 const { protect, adminOnly } = require('../middleware/auth');
+const { createActivity } = require('./activities');
 
 // Kullanıcının raporlarını listele
 router.get('/', protect, async (req, res) => {
@@ -439,7 +440,19 @@ router.post('/:id/execute', protect, async (req, res) => {
     const customer = await Customer.findById(req.user.id);
     if (customer) {
       customer.kullanimIstatistikleri.toplamSorguSayisi += 1;
+      customer.kullanimIstatistikleri.son30GunSorguSayisi += 1;
       await customer.save();
+
+      // Aktivite kaydı oluştur
+      await createActivity({
+        customerId: customer._id,
+        customerName: customer.companyName || customer.username,
+        action: 'report_executed',
+        description: `${report.raporAdi} raporu çalıştırıldı`,
+        reportId: report._id,
+        reportName: report.raporAdi,
+        type: 'success'
+      });
     }
 
     res.json({

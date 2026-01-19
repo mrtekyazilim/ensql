@@ -84,6 +84,7 @@ router.post('/query', connectorAuth, async (req, res) => {
 
     // Kullanıcı istatistiklerini güncelle
     user.kullanimIstatistikleri.toplamSorguSayisi += 1;
+    user.kullanimIstatistikleri.son30GunSorguSayisi += 1;
     await user.save();
 
     // TODO: Gerçek SQL sorgusu çalıştırma implementasyonu

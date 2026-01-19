@@ -6,6 +6,7 @@ const AdminSession = require('../models/AdminSession');
 const CustomerSession = require('../models/CustomerSession');
 const jwt = require('jsonwebtoken');
 const { protect } = require('../middleware/auth');
+const { createActivity } = require('./activities');
 
 // Admin Login
 router.post('/admin/login', async (req, res) => {
@@ -127,6 +128,15 @@ router.post('/client/login', async (req, res) => {
     // Son giriş tarihini güncelle
     user.kullanimIstatistikleri.sonGirisTarihi = new Date();
     await user.save();
+
+    // Aktivite kaydı oluştur
+    await createActivity({
+      customerId: user._id,
+      customerName: user.companyName || user.username,
+      action: 'login',
+      description: 'Sisteme giriş yapıldı',
+      type: 'success'
+    });
 
     // Session kaydı oluştur
     const { deviceId, deviceName, browserInfo } = req.body;

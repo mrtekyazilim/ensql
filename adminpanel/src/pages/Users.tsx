@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Building2, Filter, Search, Edit2, Trash2, ExternalLink } from 'lucide-react'
+import { Building2, Filter, Search, Edit2, Trash2, ExternalLink, Users as UsersIcon, CheckCircle, XCircle, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface User {
@@ -9,6 +9,13 @@ interface User {
   username: string
   hizmetBitisTarihi: string
   aktif: boolean
+  iletisimBilgileri?: {
+    yetkiliKisi?: string
+    cepTelefonu?: string
+    email?: string
+    faturaAdresi?: string
+    sehir?: string
+  }
   kullanimIstatistikleri?: {
     toplamSorguSayisi: number
     sonGirisTarihi?: string
@@ -86,7 +93,12 @@ export function Users() {
     companyName: '',
     username: '',
     password: '',
-    hizmetBitisTarihi: getDefaultBitisTarihi()
+    hizmetBitisTarihi: getDefaultBitisTarihi(),
+    yetkiliKisi: '',
+    cepTelefonu: '',
+    email: '',
+    faturaAdresi: '',
+    sehir: ''
   })
 
   useEffect(() => {
@@ -117,8 +129,17 @@ export function Users() {
 
       // Company name'i Title Case'e çevir
       const formattedData = {
-        ...formData,
-        companyName: formData.companyName ? toTitleCase(formData.companyName) : ''
+        companyName: formData.companyName ? toTitleCase(formData.companyName) : '',
+        username: formData.username,
+        password: formData.password,
+        hizmetBitisTarihi: formData.hizmetBitisTarihi,
+        iletisimBilgileri: {
+          yetkiliKisi: formData.yetkiliKisi || undefined,
+          cepTelefonu: formData.cepTelefonu || undefined,
+          email: formData.email || undefined,
+          faturaAdresi: formData.faturaAdresi || undefined,
+          sehir: formData.sehir || undefined
+        }
       }
 
       const response = await axios.post('http://localhost:13201/api/customers', formattedData, {
@@ -131,7 +152,12 @@ export function Users() {
           companyName: '',
           username: '',
           password: '',
-          hizmetBitisTarihi: getDefaultBitisTarihi()
+          hizmetBitisTarihi: getDefaultBitisTarihi(),
+          yetkiliKisi: '',
+          cepTelefonu: '',
+          email: '',
+          faturaAdresi: '',
+          sehir: ''
         })
         toast.success('Müşteri başarıyla oluşturuldu!')
         loadUsers()
@@ -147,7 +173,12 @@ export function Users() {
       companyName: user.companyName || '',
       username: user.username,
       password: '', // Şifre değiştirilmeyecekse boş bırak
-      hizmetBitisTarihi: new Date(user.hizmetBitisTarihi).toISOString().split('T')[0]
+      hizmetBitisTarihi: new Date(user.hizmetBitisTarihi).toISOString().split('T')[0],
+      yetkiliKisi: user.iletisimBilgileri?.yetkiliKisi || '',
+      cepTelefonu: user.iletisimBilgileri?.cepTelefonu || '',
+      email: user.iletisimBilgileri?.email || '',
+      faturaAdresi: user.iletisimBilgileri?.faturaAdresi || '',
+      sehir: user.iletisimBilgileri?.sehir || ''
     })
     setEditMode(true)
     setShowModal(true)
@@ -161,11 +192,22 @@ export function Users() {
       const token = localStorage.getItem('token')
 
       // Company name'i Title Case'e çevir
-      const formattedData = {
+      const formattedData: any = {
         companyName: formData.companyName ? toTitleCase(formData.companyName) : '',
         username: formData.username,
         hizmetBitisTarihi: formData.hizmetBitisTarihi,
-        ...(formData.password && { password: formData.password }) // Şifre varsa ekle
+        iletisimBilgileri: {
+          yetkiliKisi: formData.yetkiliKisi || undefined,
+          cepTelefonu: formData.cepTelefonu || undefined,
+          email: formData.email || undefined,
+          faturaAdresi: formData.faturaAdresi || undefined,
+          sehir: formData.sehir || undefined
+        }
+      }
+
+      // Şifre varsa ekle
+      if (formData.password) {
+        formattedData.password = formData.password
       }
 
       const response = await axios.put(
@@ -182,7 +224,12 @@ export function Users() {
           companyName: '',
           username: '',
           password: '',
-          hizmetBitisTarihi: getDefaultBitisTarihi()
+          hizmetBitisTarihi: getDefaultBitisTarihi(),
+          yetkiliKisi: '',
+          cepTelefonu: '',
+          email: '',
+          faturaAdresi: '',
+          sehir: ''
         })
         toast.success('Müşteri başarıyla güncellendi!')
         loadUsers()
@@ -257,6 +304,18 @@ export function Users() {
     return <div>Yükleniyor...</div>
   }
 
+  // İstatistikleri hesapla
+  const now = new Date()
+  const oneMonthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+  const totalUsers = users.length
+  const activeUsers = users.filter(u => isUserActive(u.hizmetBitisTarihi)).length
+  const inactiveUsers = totalUsers - activeUsers
+  const expiringSoon = users.filter(u => {
+    const bitisTarihi = new Date(u.hizmetBitisTarihi)
+    return bitisTarihi > now && bitisTarihi <= oneMonthFromNow
+  }).length
+
   return (
     <div>
       <div className="mb-6">
@@ -268,8 +327,15 @@ export function Users() {
                 companyName: '',
                 username: '',
                 password: '',
-                hizmetBitisTarihi: getDefaultBitisTarihi()
+                hizmetBitisTarihi: getDefaultBitisTarihi(),
+                yetkiliKisi: '',
+                cepTelefonu: '',
+                email: '',
+                faturaAdresi: '',
+                sehir: ''
               })
+              setEditMode(false)
+              setEditingUser(null)
               setShowModal(true)
             }}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-3 sm:mt-0"
@@ -277,6 +343,76 @@ export function Users() {
             Yeni Müşteri
           </button>
         </div>
+
+        {/* İstatistik Kartları */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <UsersIcon className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-blue-100 truncate">Toplam Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{totalUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-green-100 truncate">Aktif Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{activeUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <XCircle className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-red-100 truncate">Pasif Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{inactiveUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Clock className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-yellow-100 truncate">1 Ay İçinde Dolacak</dt>
+                    <dd className="text-3xl font-bold text-white">{expiringSoon}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6">
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -324,7 +460,36 @@ export function Users() {
                     <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate mb-2">
                       {user.username}
                     </p>
-                    <div className="flex items-center gap-4">
+
+                    {/* İletişim Bilgileri - Daima görünsün */}
+                    <div className="mb-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Yetkili:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.yetkiliKisi || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Telefon:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.cepTelefonu || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Email:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.email || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Şehir:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.sehir || '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-wrap">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Hizmet Bitiş: {new Date(user.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
                       </p>
@@ -435,6 +600,70 @@ export function Users() {
                         value={formData.hizmetBitisTarihi}
                         onChange={(e) => setFormData({ ...formData, hizmetBitisTarihi: e.target.value })}
                       />
+                    </div>
+
+                    {/* İletişim Bilgileri */}
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">İletişim Bilgileri (Opsiyonel)</h4>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Yetkili Kişi</label>
+                          <input
+                            type="text"
+                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Örn: Ahmet Yılmaz"
+                            value={formData.yetkiliKisi}
+                            onChange={(e) => setFormData({ ...formData, yetkiliKisi: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cep Telefonu</label>
+                            <input
+                              type="tel"
+                              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              placeholder="0532 123 4567"
+                              value={formData.cepTelefonu}
+                              onChange={(e) => setFormData({ ...formData, cepTelefonu: e.target.value })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                            <input
+                              type="email"
+                              className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              placeholder="ornek@firma.com"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fatura Adresi</label>
+                          <textarea
+                            rows={2}
+                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Cadde, sokak, mahalle..."
+                            value={formData.faturaAdresi}
+                            onChange={(e) => setFormData({ ...formData, faturaAdresi: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Şehir</label>
+                          <input
+                            type="text"
+                            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Örn: İstanbul"
+                            value={formData.sehir}
+                            onChange={(e) => setFormData({ ...formData, sehir: e.target.value })}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
