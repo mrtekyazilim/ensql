@@ -25,7 +25,7 @@ export function Footer() {
               </li>
               <li>
                 <Link to="/downloads" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
-                  İndirmeler
+                  Downloads
                 </Link>
               </li>
               <li>
@@ -40,9 +40,9 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Destek</h3>
             <ul className="space-y-2">
               <li>
-                <a href="mailto:destek@ensql.com" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+                <Link to="/contact" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                   İletişim
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/docs" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">

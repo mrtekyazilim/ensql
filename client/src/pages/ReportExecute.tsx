@@ -10,7 +10,7 @@ interface Report {
   raporAdi: string
   aciklama: string
   icon: string
-  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'normal-report'
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report'
   sqlSorgusu: string
   showDate1?: boolean
   showDate2?: boolean

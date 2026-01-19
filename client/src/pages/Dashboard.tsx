@@ -10,7 +10,7 @@ interface DashboardReport {
   aciklama: string
   icon: string
   color: string
-  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie'
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart'
   sqlSorgusu: string
 }
 
@@ -100,7 +100,7 @@ export function Dashboard() {
       if (response.data.success) {
         // Sadece dashboard türündeki aktif raporları filtrele
         const dashboardReports = response.data.reports.filter(
-          (r: any) => r.aktif && (r.raporTuru === 'dashboard-scalar' || r.raporTuru === 'dashboard-list' || r.raporTuru === 'dashboard-pie')
+          (r: any) => r.aktif && (r.raporTuru === 'dashboard-scalar' || r.raporTuru === 'dashboard-list' || r.raporTuru === 'dashboard-pie' || r.raporTuru === 'dashboard-chart')
         )
         setDashboardReports(dashboardReports)
 
@@ -312,6 +312,52 @@ export function Dashboard() {
                 />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )
+    }
+
+    if (report.raporTuru === 'dashboard-chart') {
+      // Veriyi bar chart formatına dönüştür: [{ name: string, value: number }]
+      const chartData = data.map(row => {
+        const entries = Object.entries(row)
+        const name = entries[0] ? String(entries[0][1]) : '-'
+        const value = entries[1] ? Number(entries[1][1]) || 0 : 0
+        return { name, value }
+      })
+
+      // Maksimum değeri bul
+      const maxValue = Math.max(...chartData.map(d => d.value))
+
+      return (
+        <div key={report._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center mb-4">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400 mr-3">
+              {renderIcon(report.icon)}
+            </div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{report.raporAdi}</h4>
+          </div>
+          {report.aciklama && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{report.aciklama}</p>
+          )}
+          <div className="space-y-3">
+            {chartData.map((item, index) => {
+              const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0
+              return (
+                <div key={index} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{item.name}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{item.value.toLocaleString('tr-TR')}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-500 h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )

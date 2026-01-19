@@ -26,7 +26,7 @@ const ReportSchema = new mongoose.Schema({
   },
   raporTuru: {
     type: String,
-    enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'normal-report'],
+    enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'dashboard-chart', 'normal-report'],
     default: 'normal-report',
     required: true
   },

@@ -49,32 +49,48 @@ export function Home() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 dark:from-blue-950 to-indigo-100 dark:to-indigo-950 opacity-50" />
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-              Raporlarınıza{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 dark:from-blue-400 to-indigo-600 dark:to-indigo-400">
-                Her Yerden
-              </span>{' '}
-              Erişin
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-              EnSQL ile mobil, tablet ve masaüstü cihazlarınızdan raporlarınızı görüntüleyin.
-              Kolay kurulum, güçlü raporlama, güvenli erişim.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/downloads"
-                className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 rounded-lg transition-colors"
-              >
-                Hemen İndirin
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Link>
-              <a
-                href="http://localhost:13203/login"
-                className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Demo'yu Deneyin
-              </a>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center lg:text-left">
+              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+                Raporlarınıza{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 dark:from-blue-400 to-indigo-600 dark:to-indigo-400">
+                  Her Yerden
+                </span>{' '}
+                Erişin
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+                EnSQL ile mobil, tablet ve masaüstü cihazlarınızdan raporlarınızı görüntüleyin.
+                Kolay kurulum, güçlü raporlama, güvenli erişim.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link
+                  to="/downloads"
+                  className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 rounded-lg transition-colors"
+                >
+                  Hemen İndirin
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+                <a
+                  href="http://localhost:13203/login"
+                  className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  Demo'yu Deneyin
+                </a>
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              {/* Light mode preview */}
+              <img
+                src="/img/preview1-light.png"
+                alt="EnSQL Dashboard Preview"
+                className="w-full h-auto rounded-lg shadow-2xl border border-gray-200 dark:hidden"
+              />
+              {/* Dark mode preview */}
+              <img
+                src="/img/preview1.png"
+                alt="EnSQL Dashboard Preview"
+                className="hidden dark:block w-full h-auto rounded-lg shadow-2xl border border-gray-700"
+              />
             </div>
           </div>
         </div>

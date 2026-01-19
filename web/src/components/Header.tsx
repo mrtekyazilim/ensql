@@ -9,8 +9,9 @@ export function Header() {
   const navItems = [
     { label: 'Ana Sayfa', path: '/' },
     { label: 'Fiyatlar', path: '/pricing' },
-    { label: 'İndirmeler', path: '/downloads' },
+    { label: 'Downloads', path: '/downloads' },
     { label: 'Dökümanlar', path: '/docs' },
+    { label: 'İletişim', path: '/contact' },
   ]
 
   return (
