@@ -86,7 +86,10 @@ export function Reports() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Raporlarım</h2>
+      <div className="flex items-center gap-3 mb-6">
+        <LucideIcons.BarChart3 className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Raporlar</h2>
+      </div>
 
       {/* Hizmet Süresi Dolmuş Uyarısı */}
       {serviceExpired ? (
@@ -116,7 +119,8 @@ export function Reports() {
               {reports.map((report) => (
                 <div
                   key={report._id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/reports/${report._id}`)}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all hover:scale-105 cursor-pointer"
                 >
                   <div className="flex items-center mb-4">
                     <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 mr-3">
@@ -133,34 +137,25 @@ export function Reports() {
                     </p>
                   )}
 
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
-                        <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
-                      </div>
-                      {report.sonKullanimTarihi && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
-                          <span className="text-gray-900 dark:text-white">
-                            {new Date(report.sonKullanimTarihi).toLocaleString('tr-TR', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-                      )}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Kullanım:</span>
+                      <span className="text-gray-900 dark:text-white">{report.kullanimSayisi} kez</span>
                     </div>
-                    <button
-                      onClick={() => navigate(`/reports/${report._id}`)}
-                      className="flex-shrink-0 p-3 rounded-md text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                      title="Raporu Çalıştır"
-                    >
-                      <LucideIcons.Play className="w-6 h-6" />
-                    </button>
+                    {report.sonKullanimTarihi && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Son Kullanım:</span>
+                        <span className="text-gray-900 dark:text-white">
+                          {new Date(report.sonKullanimTarihi).toLocaleString('tr-TR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -113,7 +113,7 @@ router.post('/', protect, async (req, res) => {
 // Connector güncelle
 router.put('/:id', protect, async (req, res) => {
   try {
-    const { connectorName, clientPassword, sqlServerConfig, aktif } = req.body;
+    const { connectorName, clientId, clientPassword, sqlServerConfig, aktif } = req.body;
 
     const connector = await Connector.findById(req.params.id);
 
@@ -134,6 +134,7 @@ router.put('/:id', protect, async (req, res) => {
 
     // Güncellenebilir alanlar
     if (connectorName) connector.connectorName = connectorName;
+    if (clientId) connector.clientId = clientId;
     if (clientPassword) connector.clientPassword = clientPassword;
     if (sqlServerConfig) connector.sqlServerConfig = sqlServerConfig;
     if (typeof aktif !== 'undefined') connector.aktif = aktif;

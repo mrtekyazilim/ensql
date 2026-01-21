@@ -10,6 +10,7 @@ import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
 import { Connectors } from './pages/Connectors'
 import { AutoLogin } from './pages/AutoLogin'
+import ChatReports from './pages/ChatReports'
 import { Layout } from './components/Layout'
 import { ThemeProvider } from './components/ThemeProvider'
 import { Toaster } from 'sonner'
@@ -26,6 +27,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="reports" element={<Reports />} />
             <Route path="reports/:id" element={<ReportExecute />} />
+            <Route path="chat-reports" element={<ChatReports />} />
             <Route path="report-designs" element={<ReportDesigns />} />
             <Route path="report-designs/new" element={<ReportForm />} />
             <Route path="report-designs/:id" element={<ReportForm />} />

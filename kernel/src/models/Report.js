@@ -96,7 +96,23 @@ const ReportSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     index: true
-  }
+  },
+  // Chat özelliği için
+  anahtarKelimeler: [{
+    type: String,
+    trim: true,
+    lowercase: true
+  }],
+  kategori: {
+    type: String,
+    trim: true,
+    enum: ['', 'Satış', 'Stok', 'Finans', 'İnsan Kaynakları', 'Müşteri', 'Üretim', 'Lojistik', 'Diğer'],
+    default: ''
+  },
+  ornekSorular: [{
+    type: String,
+    trim: true
+  }]
 }, {
   timestamps: true
 });

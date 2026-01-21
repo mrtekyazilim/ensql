@@ -5,7 +5,7 @@ import { Copyright } from './Copyright'
 import { Logo } from './Logo'
 import { PWAInstallBanner } from './PWAInstallBanner'
 import { usePWAInstall } from '../hooks/usePWAInstall'
-import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download, Menu, X } from 'lucide-react'
+import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download, Menu, X, BarChart3, MessageCircle } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
 
@@ -182,9 +182,17 @@ export function Layout() {
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <a
                   href="/reports"
-                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center gap-2 px-1 pt-1 border-b-2 text-sm font-medium"
                 >
+                  <BarChart3 className="w-4 h-4" />
                   Raporlar
+                </a>
+                <a
+                  href="/chat-reports"
+                  className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center gap-2 px-1 pt-1 border-b-2 text-sm font-medium"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Chat Rapor
                 </a>
               </div>
             </div>
@@ -376,8 +384,16 @@ export function Layout() {
                   onClick={() => setShowMobileMenu(false)}
                   className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                 >
-                  <Database className="w-5 h-5 mr-3" />
+                  <BarChart3 className="w-5 h-5 mr-3" />
                   Raporlar
+                </a>
+                <a
+                  href="/chat-reports"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md mt-1"
+                >
+                  <MessageCircle className="w-5 h-5 mr-3" />
+                  Chat Rapor
                 </a>
               </nav>
             </div>

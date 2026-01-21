@@ -118,6 +118,7 @@ export function Connectors() {
 
       const updateData: any = {
         connectorName: formData.connectorName,
+        clientId: formData.clientId,
         sqlServerConfig: {
           server: formData.sqlServer,
           database: formData.sqlDatabase,
@@ -612,18 +613,17 @@ export function Connectors() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Client Password {!editMode && '*'}
-                            {editMode && <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(Değiştirmek için doldurun)</span>}
+                            Client Password *
                           </label>
                           <div className="relative">
                             <input
                               type={showClientPassword ? "text" : "password"}
-                              required={!editMode}
+                              required
                               autoComplete="new-password"
                               value={formData.clientPassword}
                               onChange={(e) => setFormData({ ...formData, clientPassword: e.target.value })}
                               className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 pr-10 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                              placeholder={editMode ? "Boş bırakılabilir (mevcut korunu)" : "Client Password"}
+                              placeholder="Client Password"
                             />
                             <button
                               type="button"

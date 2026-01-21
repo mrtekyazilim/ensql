@@ -76,6 +76,108 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
+// Rapor arama endpoint'i (Chat özelliği için)
+router.get('/search/query', protect, async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Arama sorgusu gereklidir'
+      });
+    }
+
+    const searchQuery = q.trim().toLowerCase();
+
+    // Türkçe karakterleri normalize et
+    const turkishMap = {
+      'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
+      'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
+    };
+    const normalizedQuery = searchQuery.replace(/[çğıöşüÇĞİÖŞÜ]/g, letter => turkishMap[letter] || letter);
+
+    // Stopwords (Türkçe)
+    const stopwords = ['bir', 'bu', 've', 'veya', 'ile', 'için', 'mi', 'mı', 'mu', 'mü', 'ne', 'nedir', 'olan', 'olan', 'göster', 'ver', 'getir'];
+    const queryWords = normalizedQuery.split(/\s+/).filter(word => word.length > 2 && !stopwords.includes(word));
+
+    // Kullanıcının raporlarını getir
+    let filter = { aktif: true };
+    if (req.user.role !== 'admin') {
+      filter.customerId = req.user.id;
+    }
+
+    const reports = await Report.find(filter);
+
+    // Her rapor için skor hesapla
+    const scoredReports = reports.map(report => {
+      let score = 0;
+      const raporAdiNormalized = report.raporAdi.toLowerCase().replace(/[çğıöşüÇĞİÖŞÜ]/g, letter => turkishMap[letter] || letter);
+      const aciklamaNormalized = (report.aciklama || '').toLowerCase().replace(/[çğıöşüÇĞİÖŞÜ]/g, letter => turkishMap[letter] || letter);
+
+      // Başlık eşleşmesi (5x ağırlık)
+      queryWords.forEach(word => {
+        if (raporAdiNormalized.includes(word)) {
+          score += 5;
+        }
+      });
+
+      // Anahtar kelime eşleşmesi (3x ağırlık)
+      if (report.anahtarKelimeler && report.anahtarKelimeler.length > 0) {
+        report.anahtarKelimeler.forEach(keyword => {
+          const keywordNormalized = keyword.toLowerCase().replace(/[çğıöşüÇĞİÖŞÜ]/g, letter => turkishMap[letter] || letter);
+          queryWords.forEach(word => {
+            if (keywordNormalized.includes(word) || word.includes(keywordNormalized)) {
+              score += 3;
+            }
+          });
+        });
+      }
+
+      // Açıklama eşleşmesi (1x ağırlık)
+      queryWords.forEach(word => {
+        if (aciklamaNormalized.includes(word)) {
+          score += 1;
+        }
+      });
+
+      // Kategori eşleşmesi (2x ağırlık)
+      if (report.kategori) {
+        const kategoriNormalized = report.kategori.toLowerCase().replace(/[çğıöşüÇĞİÖŞÜ]/g, letter => turkishMap[letter] || letter);
+        queryWords.forEach(word => {
+          if (kategoriNormalized.includes(word)) {
+            score += 2;
+          }
+        });
+      }
+
+      return {
+        ...report.toObject(),
+        matchScore: score
+      };
+    });
+
+    // Skora göre sırala ve sadece skor > 0 olanları döndür
+    const filteredReports = scoredReports
+      .filter(r => r.matchScore > 0)
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5); // En iyi 5 sonuç
+
+    res.json({
+      success: true,
+      count: filteredReports.length,
+      query: searchQuery,
+      reports: filteredReports
+    });
+  } catch (error) {
+    console.error('Report search error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
 // Yeni rapor oluştur
 router.post('/', protect, async (req, res) => {
   try {

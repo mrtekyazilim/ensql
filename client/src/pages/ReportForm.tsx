@@ -16,6 +16,9 @@ interface ReportFormData {
   showDate2: boolean
   showSearch: boolean
   aktif: boolean
+  anahtarKelimeler: string[]
+  kategori: string
+  ornekSorular: string[]
 }
 
 interface TestResult {
@@ -44,6 +47,18 @@ const POPULAR_ICONS = [
   'Tag', 'Target', 'Terminal', 'Trash', 'TrendingDown', 'Truck', 'Unlock',
   'Video', 'Volume2', 'Wifi', 'Zap', 'Archive', 'Award', 'Bell',
   'Bookmark', 'Box', 'Camera', 'Folder', 'ArrowUp', 'ArrowDown'
+]
+
+const KATEGORI_OPTIONS = [
+  '',
+  'Satış',
+  'Stok',
+  'Finans',
+  'İnsan Kaynakları',
+  'Müşteri',
+  'Üretim',
+  'Lojistik',
+  'Diğer'
 ]
 
 const COLOR_THEMES = [
@@ -91,7 +106,10 @@ export function ReportForm() {
     showDate1: false,
     showDate2: false,
     showSearch: false,
-    aktif: true
+    aktif: true,
+    anahtarKelimeler: [],
+    kategori: '',
+    ornekSorular: []
   })
 
   useEffect(() => {
@@ -120,7 +138,10 @@ export function ReportForm() {
           showDate1: report.showDate1 || false,
           showDate2: report.showDate2 || false,
           showSearch: report.showSearch || false,
-          aktif: report.aktif !== undefined ? report.aktif : true
+          aktif: report.aktif !== undefined ? report.aktif : true,
+          anahtarKelimeler: report.anahtarKelimeler || [],
+          kategori: report.kategori || '',
+          ornekSorular: report.ornekSorular || []
         })
       }
     } catch (error) {
@@ -527,6 +548,79 @@ export function ReportForm() {
                     </p>
                   </div>
                 </label>
+              </div>
+            </div>
+
+            {/* Chat Özelliği İçin */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                Chat Rapor Özellikleri
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                Kullanıcıların doğal dil ile bu raporu bulabilmesi için anahtar kelimeler ve kategori ekleyin
+              </p>
+
+              <div className="space-y-4">
+                {/* Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Kategori
+                  </label>
+                  <select
+                    value={formData.kategori}
+                    onChange={(e) => setFormData({ ...formData, kategori: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={loading}
+                  >
+                    {KATEGORI_OPTIONS.map((kat) => (
+                      <option key={kat} value={kat}>
+                        {kat || 'Kategori Seçin'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Anahtar Kelimeler */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Anahtar Kelimeler
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.anahtarKelimeler.join(', ')}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      anahtarKelimeler: e.target.value.split(',').map(k => k.trim()).filter(k => k)
+                    })}
+                    placeholder="Örn: satış, ciro, günlük (virgülle ayırın)"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Kullanıcıların bu raporu bulmasına yardımcı olacak kelimeler
+                  </p>
+                </div>
+
+                {/* Örnek Sorular */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Örnek Sorular
+                  </label>
+                  <textarea
+                    value={formData.ornekSorular.join('\n')}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      ornekSorular: e.target.value.split('\n').filter(s => s.trim())
+                    })}
+                    placeholder="Örn:&#10;Bugünkü satışlar nedir?&#10;Bu ayki cirom ne kadar?"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Her satıra bir örnek soru yazın (kullanıcıya ipucu olarak gösterilecek)
+                  </p>
+                </div>
               </div>
             </div>
 

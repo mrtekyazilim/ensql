@@ -58,6 +58,7 @@ app.use('/api/connector-proxy', require('./routes/connectorProxy'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/activities', require('./routes/activities'));
 app.use('/api/metrics', require('./routes/metrics'));
+app.use('/api/chat', require('./routes/chat'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
