@@ -14,7 +14,7 @@ export function Layout() {
   const location = useLocation()
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('adminToken')
     setIsAuthenticated(!!token)
 
     if (token) {
@@ -26,7 +26,7 @@ export function Layout() {
 
   const loadCurrentUser = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('adminToken')
       const response = await axios.get('http://localhost:13201/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -73,7 +73,7 @@ export function Layout() {
                   className="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium gap-1"
                 >
                   <Users className="h-4 w-4" />
-                  Müşteriler
+                  Partnerler
                 </a>
                 <a
                   href="/reports"
@@ -131,7 +131,9 @@ export function Layout() {
                         )}
                         <button
                           onClick={() => {
-                            localStorage.removeItem('token')
+                            localStorage.removeItem('adminToken')
+                            localStorage.removeItem('adminUser')
+                            localStorage.removeItem('admin-deviceId')
                             window.location.href = '/login'
                           }}
                           className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"

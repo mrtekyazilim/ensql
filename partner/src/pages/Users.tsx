@@ -107,7 +107,7 @@ export function Users() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('partnerToken')
       const response = await axios.get('http://localhost:13201/api/customers', {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -125,7 +125,7 @@ export function Users() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('partnerToken')
 
       // Company name'i Title Case'e çevir
       const formattedData = {
@@ -189,7 +189,7 @@ export function Users() {
     if (!editingUser) return
 
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('partnerToken')
 
       // Company name'i Title Case'e çevir
       const formattedData: any = {
@@ -254,7 +254,7 @@ export function Users() {
     }
 
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('partnerToken')
       const response = await axios.delete(
         `http://localhost:13201/api/customers/${deletingUser._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -274,14 +274,14 @@ export function Users() {
 
   const handleConnectToClient = async (user: User) => {
     try {
-      const token = localStorage.getItem('token')
-      const deviceId = `admin-panel-${Date.now()}`
+      const token = localStorage.getItem('partnerToken')
+      const deviceId = `partner-panel-${Date.now()}`
 
       const response = await axios.post(
-        `http://localhost:13201/api/auth/admin-login-as-customer/${user._id}`,
+        `http://localhost:13201/api/auth/partner-login-as-customer/${user._id}`,
         {
           deviceId,
-          deviceName: 'Admin Panel',
+          deviceName: 'Partner Panel',
           browserInfo: navigator.userAgent
         },
         { headers: { Authorization: `Bearer ${token}` } }

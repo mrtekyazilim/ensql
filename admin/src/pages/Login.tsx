@@ -17,10 +17,10 @@ export function Login() {
 
   // DeviceId oluştur veya al
   const getDeviceId = () => {
-    let deviceId = localStorage.getItem('deviceId')
+    let deviceId = localStorage.getItem('admin-deviceId')
     if (!deviceId) {
       deviceId = crypto.randomUUID()
-      localStorage.setItem('deviceId', deviceId)
+      localStorage.setItem('admin-deviceId', deviceId)
     }
     return deviceId
   }
@@ -56,8 +56,8 @@ export function Login() {
       })
 
       if (response.data.success) {
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        localStorage.setItem('adminToken', response.data.token)
+        localStorage.setItem('adminUser', JSON.stringify(response.data.user))
         navigate(from, { replace: true })
       }
     } catch (err: any) {
@@ -85,7 +85,7 @@ export function Login() {
 
               <div className="space-y-4 mb-8">
                 <p className="text-white text-sm leading-relaxed">
-                  Müşterilerinizin raporlarını merkezi olarak yönetin. Kullanıcı tanımlamaları, rapor tasarımları ve sistem ayarlarını tek noktadan kontrol edin.
+                  Partner hesaplarını merkezi olarak yönetin. Partner tanımlamaları, müşteri listeleri ve sistem ayarlarını tek noktadan kontrol edin.
                 </p>
               </div>
 
@@ -96,7 +96,7 @@ export function Login() {
                   </div>
                   <div>
                     <p className="text-white text-sm font-medium">Kullanıcı Yönetimi</p>
-                    <p className="text-indigo-200 text-xs">Müşteri hesaplarını kolayca yönetin</p>
+                    <p className="text-indigo-200 text-xs">Partner hesaplarını kolayca yönetin</p>
                   </div>
                 </div>
 

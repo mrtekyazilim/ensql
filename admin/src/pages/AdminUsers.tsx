@@ -26,7 +26,7 @@ export function AdminUsers() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('adminToken')
       const response = await axios.get('http://localhost:13201/api/admin-users', {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -44,7 +44,7 @@ export function AdminUsers() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('adminToken')
       const response = await axios.post(
         'http://localhost:13201/api/admin-users',
         formData,
@@ -106,8 +106,8 @@ export function AdminUsers() {
                   <div className="flex items-center space-x-2">
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin'
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}
                     >
                       {user.role === 'admin' ? 'Admin' : 'Kullanıcı'}

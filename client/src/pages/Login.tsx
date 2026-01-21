@@ -5,8 +5,10 @@ import { ThemeToggle } from '../components/ThemeToggle'
 import { Logo } from '../components/Logo'
 import { usePWAInstall } from '../hooks/usePWAInstall'
 import { Monitor, Smartphone, Tablet, Zap, Shield, TrendingUp, Download } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function Login() {
+  const [partnerCode, setPartnerCode] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,6 +18,20 @@ export function Login() {
   const { isInstallable, isFromAdminPanel, install } = usePWAInstall()
 
   const from = (location.state as any)?.from?.pathname || '/dashboard'
+
+  // Partner kod input'u temizle (sadece lowercase, rakam ve tire)
+  const handlePartnerCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase()
+    // Sadece lowercase harfler, rakamlar ve tire karakterine izin ver
+    const cleaned = value.replace(/[^a-z0-9-]/g, '')
+
+    // Geçersiz karakter varsa uyarı göster
+    if (value !== cleaned) {
+      toast.warning('Partner kodu sadece küçük harf, rakam ve tire (-) içerebilir')
+    }
+
+    setPartnerCode(cleaned)
+  }
 
   // URL'den otomatik login parametrelerini kontrol et
   useEffect(() => {
@@ -70,6 +86,7 @@ export function Login() {
       const browserInfo = getBrowserInfo()
 
       const response = await axios.post('http://localhost:13201/api/auth/client/login', {
+        partnerCode,
         username,
         password,
         deviceId,
@@ -181,6 +198,22 @@ export function Login() {
               </div>
             )}
             <div className="space-y-4">
+              <div>
+                <label htmlFor="partnerCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Partner Kodu
+                </label>
+                <input
+                  id="partnerCode"
+                  name="partnerCode"
+                  type="text"
+                  required
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                  placeholder="partner-kodu"
+                  value={partnerCode}
+                  onChange={handlePartnerCodeChange}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Küçük harf, rakam ve tire (-) kullanın</p>
+              </div>
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Kullanıcı Adı

@@ -18,7 +18,7 @@ mongod --dbpath C:\data\db
 # kernel klasörüne gidin
 cd kernel
 
-# Admin kullanıcısı oluşturun (ilk seferinde)
+# Örnek verileri oluşturun (ilk seferinde)
 yarn seed
 
 # Backend'i başlatın
@@ -27,26 +27,57 @@ yarn dev
 
 Backend `http://localhost:13201` adresinde çalışacak.
 
-### Admin Kullanıcı Bilgileri
+### Seed Script ile Oluşturulan Hesaplar
 
-- **Kullanıcı Adı:** admin
-- **Şifre:** admin123
+**Admin Hesabı:**
+
+- Kullanıcı Adı: `admin`
+- Şifre: `admin123`
+- URL: http://localhost:13205
+
+**Demo Partner Hesabı:**
+
+- Partner Kodu: `demo-partner`
+- Kullanıcı Adı: `demo`
+- Şifre: `demo123`
+- URL: http://localhost:13202
+
+**Demo Customer Hesabı:**
+
+- Partner Kodu: `demo-partner`
+- Kullanıcı Adı: `test`
+- Şifre: `test123`
+- URL: http://localhost:13203
 
 ## 3. Admin Panel Başlatma
 
 Yeni bir terminal penceresi açın:
 
 ```bash
-# adminpanel klasörüne gidin
-cd adminpanel
+# admin klasörüne gidin
+cd admin
 
 # Development modunda başlatın
 yarn dev
 ```
 
-Admin Panel `http://localhost:13202` adresinde çalışacak.
+Admin Panel `http://localhost:13205` adresinde çalışacak.
 
-## 4. Client Uygulaması Başlatma
+## 4. Partner Panel Başlatma
+
+Yeni bir terminal penceresi açın:
+
+```bash
+# partner klasörüne gidin
+cd partner
+
+# Development modunda başlatın
+yarn dev
+```
+
+Partner Panel `http://localhost:13202` adresinde çalışacak.
+
+## 5. Client Uygulaması Başlatma
 
 Yeni bir terminal penceresi açın:
 
@@ -60,42 +91,57 @@ yarn dev
 
 Client Uygulaması `http://localhost:13203` adresinde çalışacak.
 
-## 5. İlk Kullanıcı Oluşturma
+## 6. Test Etme - 3-Tier Architecture
 
-1. Admin Panel'e giriş yapın: `http://localhost:13202`
+### Admin Panel Testi
 
-   - Kullanıcı Adı: admin
+1. Admin Panel'e giriş yapın: `http://localhost:13205`
+   - Kullanıcı Adı: `admin`
+   - Şifre: `admin123`
+
+2. "Partnerler" sayfasına gidin
+   - Demo partner'ı görebilirsiniz: `demo-partner`
+   - "Bağlan" butonuna tıklayarak partner paneline geçiş yapabilirsiniz
+
+3. Yeni partner oluşturmak için:
+   - "Yeni Partner" butonuna tıklayın
+   - Partner kodu: `test-partner` (küçük harf, rakam, tire)
+   - Partner ismi: Test Partner A.Ş.
+   - İlk kullanıcı adı: admin
    - Şifre: admin123
+   - Hizmet Bitiş Tarihi: Gelecek bir tarih
 
-2. "Kullanıcılar" sayfasına gidin
+### Partner Panel Testi
 
-3. "Yeni Kullanıcı" butonuna tıklayın
+1. Partner Panel'e giriş yapın: `http://localhost:13202`
+   - Partner Kodu: `demo-partner`
+   - Kullanıcı Adı: `demo`
+   - Şifre: `demo123`
 
-4. Kullanıcı bilgilerini doldurun:
+2. "Müşteriler" sayfasına gidin
+   - Demo müşteriyi görebilirsiniz: `test`
+   - "Bağlan" butonuna tıklayarak customer uygulamasına geçiş yapabilirsiniz
 
-   - Kullanıcı Adı: test
-   - Şifre: test123
-   - Client ID: test-client-1
-   - Client Password: test-connector-123
-   - Hizmet Bitiş Tarihi: Gelecek bir tarih seçin
+3. Yeni müşteri oluşturmak için:
+   - "Yeni Müşteri" butonuna tıklayın
+   - Kullanıcı bilgilerini doldurun
+   - Hizmet bitiş tarihi seçin
 
-5. "Oluştur" butonuna tıklayın
-
-## 6. Client Uygulamasında Giriş Yapma
+### Customer App Testi
 
 1. Client Uygulamasına gidin: `http://localhost:13203`
+   - Partner Kodu: `demo-partner`
+   - Kullanıcı Adı: `test`
+   - Şifre: `test123`
 
-2. Oluşturduğunuz kullanıcı bilgileriyle giriş yapın:
-
-   - Kullanıcı Adı: test
-   - Şifre: test123
-
-3. Ayarlar sayfasından SQL Server bağlantı bilgilerini girin
+2. Raporlarınızı görüntüleyin
+3. Ayarlar sayfasından connector bilgilerini yapılandırın
 
 ## Çalışma Portları
 
 - **Backend API:** http://localhost:13201
-- **Admin Panel:** http://localhost:13202
+- **Admin Panel:** http://localhost:13205
+- **Partner Panel:** http://localhost:13202
 - **Client App:** http://localhost:13203
 
 ## Önemli Notlar
@@ -126,17 +172,29 @@ Client Uygulaması `http://localhost:13203` adresinde çalışacak.
 
 ### Authentication Endpoints
 
-- `POST /api/auth/admin/login` - Admin girişi
-- `POST /api/auth/client/login` - Client girişi
+- `POST /api/auth/admin/login` - Admin girişi (username + password)
+- `POST /api/auth/partner/login` - Partner girişi (partnerCode + username + password)
+- `POST /api/auth/client/login` - Customer girişi (partnerCode + username + password)
+- `POST /api/auth/admin-login-as-partner/:partnerId` - Admin→Partner geçişi
+- `POST /api/auth/partner-login-as-customer/:customerId` - Partner→Customer geçişi
 - `GET /api/auth/me` - Mevcut kullanıcı bilgisi
 
-### User Endpoints (Admin only)
+### Partner Endpoints (Admin only)
 
-- `GET /api/users` - Tüm kullanıcılar
-- `POST /api/users` - Yeni kullanıcı oluştur
-- `GET /api/users/:id` - Kullanıcı detayı
-- `PUT /api/users/:id` - Kullanıcı güncelle
-- `DELETE /api/users/:id` - Kullanıcı sil
+- `GET /api/partners` - Tüm partnerler (customer count ile)
+- `POST /api/partners` - Yeni partner oluştur (partnerCode, partnerName, username, password)
+- `GET /api/partners/:id` - Partner detayı
+- `GET /api/partners/:id/customers` - Partner müşteri listesi
+- `PUT /api/partners/:id` - Partner güncelle (aktif=false → customer sessions close)
+- `PUT /api/partners/:id/activate` - Partner aktifleştir (partnerCode onayı)
+
+### Customer Endpoints (Partner filtered)
+
+- `GET /api/customers` - Müşteri listesi (partner bazlı filtreleme)
+- `POST /api/customers` - Yeni müşteri oluştur (partnerId otomatik)
+- `GET /api/customers/:id` - Müşteri detayı
+- `PUT /api/customers/:id` - Müşteri güncelle
+- `DELETE /api/customers/:id` - Müşteri sil
 
 ### Report Endpoints
 

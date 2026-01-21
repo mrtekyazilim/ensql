@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const AdminUser = require('../models/AdminUser');
 const Customer = require('../models/Customer');
+const Partner = require('../models/Partner');
 const Connector = require('../models/Connector');
 
 // JWT token doğrulama middleware
@@ -25,6 +26,11 @@ exports.protect = async (req, res, next) => {
     let user;
     if (decoded.role === 'admin' || decoded.role === 'user') {
       user = await AdminUser.findById(decoded.id).select('-password');
+    } else if (decoded.role === 'partner') {
+      user = await Partner.findById(decoded.id).select('-password');
+      if (user) {
+        user.role = 'partner';
+      }
     } else {
       user = await Customer.findById(decoded.id).select('-password');
       // Customer için role ekle (model'de yok)
@@ -42,7 +48,7 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // Hizmet bitiş tarihi kontrolü (customer için)
+    // Hizmet bitiş tarihi kontrolü (customer ve partner için)
     if (req.user.hizmetBitisTarihi) {
       if (new Date() > new Date(req.user.hizmetBitisTarihi)) {
         return res.status(403).json({
@@ -50,6 +56,14 @@ exports.protect = async (req, res, next) => {
           message: 'Hizmet süreniz dolmuştur'
         });
       }
+    }
+
+    // Partner aktif kontrolü
+    if (req.user.role === 'partner' && req.user.aktif === false) {
+      return res.status(403).json({
+        success: false,
+        message: 'Partner hesabınız pasif durumda'
+      });
     }
 
     next();
@@ -69,6 +83,18 @@ exports.adminOnly = (req, res, next) => {
     return res.status(403).json({
       success: false,
       message: 'Bu işlem için admin yetkisi gereklidir'
+    });
+  }
+};
+
+// Partner yetkisi kontrolü
+exports.partnerOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'partner') {
+    next();
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Bu işlem için partner yetkisi gereklidir'
     });
   }
 };

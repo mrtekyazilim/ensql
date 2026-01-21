@@ -3,11 +3,20 @@ const router = express.Router();
 const Customer = require('../models/Customer');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// Tüm müşterileri listele (admin only)
-router.get('/', protect, adminOnly, async (req, res) => {
+// Tüm müşterileri listele (admin ve partner)
+router.get('/', protect, async (req, res) => {
   try {
-    const customers = await Customer.find()
+    let filter = {};
+
+    // Partner ise sadece kendi müşterilerini görsün
+    if (req.user.role === 'partner') {
+      filter = { partnerId: req.user._id };
+    }
+    // Admin ise hepsini görsün (filter boş kalır)
+
+    const customers = await Customer.find(filter)
       .select('-password')
+      .populate('partnerId', 'partnerCode partnerName')
       .sort({ createdAt: -1 });
 
     res.json({
@@ -36,8 +45,16 @@ router.get('/:id', protect, async (req, res) => {
       });
     }
 
-    // Admin değilse sadece kendi bilgilerini görebilir
-    if (req.user.role !== 'admin' && req.user.id !== req.params.id) {
+    // Admin/Partner değilse sadece kendi bilgilerini görebilir
+    if (req.user.role === 'customer' && req.user.id !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // Partner ise sadece kendi müşterisine erişebilir
+    if (req.user.role === 'partner' && customer.partnerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Bu işlem için yetkiniz yok'
@@ -57,10 +74,10 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// Yeni müşteri oluştur (admin only)
-router.post('/', protect, adminOnly, async (req, res) => {
+// Yeni müşteri oluştur (admin ve partner)
+router.post('/', protect, async (req, res) => {
   try {
-    const { companyName, username, password, hizmetBitisTarihi, iletisimBilgileri } = req.body;
+    const { companyName, username, password, hizmetBitisTarihi, iletisimBilgileri, partnerId } = req.body;
 
     if (!companyName || !username || !password) {
       return res.status(400).json({
@@ -69,12 +86,37 @@ router.post('/', protect, adminOnly, async (req, res) => {
       });
     }
 
-    // Kullanıcı adı kontrolü
-    const existingCustomer = await Customer.findOne({ username });
+    // PartnerId belirle
+    let finalPartnerId;
+    if (req.user.role === 'partner') {
+      // Partner kendi müşterisini oluşturuyor
+      finalPartnerId = req.user._id;
+    } else if (req.user.role === 'admin') {
+      // Admin için partnerId body'den gelmeli
+      if (!partnerId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Partner ID gereklidir'
+        });
+      }
+      finalPartnerId = partnerId;
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // Username + partnerId unique kontrolü
+    const existingCustomer = await Customer.findOne({
+      username,
+      partnerId: finalPartnerId
+    });
+
     if (existingCustomer) {
       return res.status(400).json({
         success: false,
-        message: 'Bu kullanıcı adı zaten kullanılıyor'
+        message: 'Bu kullanıcı adı bu partner için zaten kullanılıyor'
       });
     }
 
@@ -88,6 +130,7 @@ router.post('/', protect, adminOnly, async (req, res) => {
     }
 
     const customer = await Customer.create({
+      partnerId: finalPartnerId,
       companyName,
       username,
       password, // Model'de otomatik hash'lenir
@@ -115,8 +158,8 @@ router.post('/', protect, adminOnly, async (req, res) => {
   }
 });
 
-// Müşteri güncelle (admin only)
-router.put('/:id', protect, adminOnly, async (req, res) => {
+// Müşteri güncelle (admin ve partner)
+router.put('/:id', protect, async (req, res) => {
   try {
     const { companyName, username, password, hizmetBitisTarihi, aktif, iletisimBilgileri } = req.body;
 
@@ -126,6 +169,22 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Müşteri bulunamadı'
+      });
+    }
+
+    // Partner ise sadece kendi müşterisini güncelleyebilir
+    if (req.user.role === 'partner' && customer.partnerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // Customer ise hiç güncelleyemez
+    if (req.user.role === 'customer') {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
       });
     }
 
@@ -158,8 +217,8 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
-// Müşteri sil (admin only)
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+// Müşteri sil (admin ve partner)
+router.delete('/:id', protect, async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.id);
 
@@ -167,6 +226,22 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Müşteri bulunamadı'
+      });
+    }
+
+    // Partner ise sadece kendi müşterisini silebilir
+    if (req.user.role === 'partner' && customer.partnerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // Customer ise hiç silemez
+    if (req.user.role === 'customer') {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
       });
     }
 

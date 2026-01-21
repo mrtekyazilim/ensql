@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Users } from './pages/Users'
+import { Partners } from './pages/Partners'
 import { Reports } from './pages/Reports'
 import { Sessions } from './pages/Sessions'
 import { Profile } from './pages/Profile'
@@ -20,7 +21,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="users" element={<Users />} />
+            <Route path="users" element={<Partners />} />
             <Route path="reports" element={<Reports />} />
             <Route path="sessions" element={<Sessions />} />
             <Route path="profile" element={<Profile />} />

@@ -2,7 +2,21 @@
 
 ## Proje Genel Bakış
 
-EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan bir sistemdir. Kullanıcılar hem mobil (cep telefonu) hem de PC/web üzerinden raporlarına erişebilir.
+EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan bir sistemdir. **3-tier mimari** ile çalışır: Admin → Partner → Customer hiyerarşisi. Kullanıcılar hem mobil (cep telefonu) hem de PC/web üzerinden raporlarına erişebilir.
+
+## Mimari Yapı (3-Tier Hierarchy)
+
+```
+Admin Panel (port:13205)
+    ↓
+Partner Panel (port:13202)
+    ↓
+Customer App (port:13203)
+```
+
+- **Admin:** Tüm sistemi yönetir, partnerleri oluşturur/yönetir
+- **Partner:** Kendi müşterilerini yönetir, raporlar oluşturur
+- **Customer:** Kendi raporlarını görüntüler
 
 ## Proje Yapısı
 
@@ -15,20 +29,52 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 
 **Authentication Yapısı:**
 
-- **Admin Authentication:** Kullanıcı adı ve şifre ile giriş (adminpanel için)
-- **Client Authentication:** Kullanıcı adı ve şifre ile giriş (client uygulaması için)
-- **Connector Authentication:** clientId ve clientPassword (müşteri connector bağlantısı için)
+- **Admin Authentication:** Kullanıcı adı ve şifre ile giriş (admin panel için)
+- **Partner Authentication:** partnerCode + username + password (partner panel için)
+  - **partnerCode Format:** `/^[a-z0-9-]+$/` (sadece lowercase, rakam, tire)
+  - **ÖNEMLİ:** Partner `password` alanı hash'lenir, ancak `clientPassword` plain text
+- **Customer Authentication:** partnerCode + username + password (customer uygulaması için)
+  - Customer'lar partnerlara bağlıdır (partnerId foreign key)
+- **Connector Authentication:** clientId ve clientPassword (connector bağlantısı için)
   - **ÖNEMLİ:** Connector `clientPassword` alanı **plain text** olarak database'de saklanır (hash'lenmez)
   - Karşılaştırma işlemi düz string equality ile yapılır
   - Güvenlik: Connector sadece ilgili müşteriye ait verilere erişebilir
 
 **Özellikler:**
 
+- Partner yönetimi (CRUD, soft-delete, reactivation)
+- Customer yönetimi (partnerlara bağlı)
 - Kullanıcı yönetimi ve hizmet bitiş tarihleri
 - SQL sorgu yönetimi
 - Rapor veri servisi
 - Connector bağlantı yönetimi
+- Activity logging (partner deactivation, customer session closures)
 - **ConnectorAbi Proxy:** Client tarafından ConnectorAbi'ye doğrudan erişim yerine, kernel üzerinden proxy edilir
+
+**Database Modelleri:**
+
+- **AdminUser:** Admin panel kullanıcıları (role: admin)
+- **AdminSession:** Admin oturum takibi
+- **Partner:** Partner bilgileri (partnerCode unique, soft-delete destekli)
+- **PartnerSession:** Partner oturum takibi
+- **Customer:** Müşteri bilgileri (partnerId ile bağlantılı, compound unique: partnerId+username)
+- **CustomerSession:** Müşteri oturum takibi
+- **Connector:** SQL Server bağlantı bilgileri
+- **Report:** Rapor tanımları
+- **Activity:** Sistem aktivite logları
+
+**API Endpoints:**
+
+- `/api/auth/admin/login` - Admin girişi
+- `/api/auth/partner/login` - Partner girişi (partnerCode + username + password)
+- `/api/auth/client/login` - Customer girişi (partnerCode + username + password)
+- `/api/auth/admin-login-as-partner/:partnerId` - Admin olarak partner paneline geçiş
+- `/api/auth/partner-login-as-customer/:customerId` - Partner olarak customer uygulamasına geçiş
+- `/api/partners` - Partner CRUD (admin only)
+- `/api/partners/:id/customers` - Partner müşteri listesi
+- `/api/partners/:id/activate` - Partner aktifleştir (partnerCode onayı ile)
+- `/api/customers` - Customer CRUD (partner filtered)
+- `/api/connector-proxy/*` - ConnectorAbi proxy endpoints
 
 **ConnectorAbi Entegrasyonu:**
 
@@ -80,27 +126,52 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
   - `/api/connector-proxy/mysql` - MySQL sorgu çalıştırma
   - `/api/connector-proxy/pg` - PostgreSQL sorgu çalıştırma
 
-### adminpanel/ - Admin Panel Uygulaması
+### admin/ - Admin Panel Uygulaması
 
 - **Teknolojiler:** React.js, TypeScript, Tailwind CSS, shadcn
-- **Amaç:** Sistem yönetimi ve kullanıcı yönetimi
-- **Port:** 13202
+- **Amaç:** Sistem ve partner yönetimi
+- **Port:** 13205
 - **Backend API URL:** http://localhost:13201/api
-- **Client URL:** http://localhost:13203
+- **Partner Panel URL:** http://localhost:13202
+- **localStorage Keys:** adminToken, adminUser, admin-deviceId
+- **Theme Key:** ensql-admin-theme
 
 **Özellikler:**
 
-- Kullanıcı tanımlama ve yönetimi
-- Kullanıcı hizmet bitiş tarihleri
-- Kullanıcı kullanım istatistikleri (ne kadar kullandığı)
-- Kullanıcı listesinde "Bağlan" butonu → Client projesine admin olarak erişim
+- Partner tanımlama ve yönetimi (Partners.tsx)
+- Partner CRUD (partnerCode, partnerName, hizmetBitisTarihi)
+- Partner customer count ve detail modal
+- Partner aktifleştir/pasifleştir (soft-delete)
+- "Bağlan" butonu → Partner paneline admin olarak erişim
+- Admin kullanıcı yönetimi (AdminUsers.tsx)
+- Activity ve session tracking
+
+### partner/ - Partner Panel Uygulaması
+
+- **Teknolojiler:** React.js, TypeScript, Tailwind CSS, shadcn
+- **Amaç:** Partner seviyesinde müşteri ve rapor yönetimi
+- **Port:** 13202
+- **Backend API URL:** http://localhost:13201/api
+- **Client URL:** http://localhost:13203
+- **localStorage Keys:** partnerToken, partnerUser, partner-deviceId
+- **Theme Key:** ensql-partner-theme
+
+**Özellikler:**
+
+- Müşteri tanımlama ve yönetimi (partnerId ile filtrelenmiş)
+- Müşteri hizmet bitiş tarihleri
+- Müşteri kullanım istatistikleri
+- "Bağlan" butonu → Client projesine partner olarak erişim
 - SQL sorgu tasarlama ve yönetimi
+- Dashboard (partner bazlı istatistikler)
 
 ### client/ - Kullanıcı Rapor Uygulaması
 
 - **Teknolojiler:** React.js, TypeScript, Tailwind CSS, PWA, shadcn
 - **Amaç:** Kullanıcıların raporlarını görüntülemesi
 - **Port:** 13203
+- **localStorage Keys:** clientToken, clientUser, client-deviceId (veya deviceId)
+- **Theme Key:** ensql-client-theme
 
 **Özellikler:**
 
@@ -123,12 +194,15 @@ EnSQL, connector uygulaması üzerinden müşterilere özel raporlar sağlayan b
 - Environment variables için .env kullan
 - Error handling middleware'leri ekle
 
-### Frontend (adminpanel/ ve client/)
+### Frontend (admin/, partner/ ve client/)
 
 - TypeScript strict mode kullan
 - Tailwind CSS için utility-first yaklaşımı
 - shadcn/ui component library kullan
 - React hooks ve functional components
+- PWA için service worker ve manifest (client/)
+- Responsive tasarım (mobile-first)
+- **Dark/Light Mode:** Her üç projede de dark mode desteği (localStorage ile kalıcı)
 - PWA için service worker ve manifest (client/)
 - Responsive tasarım (mobile-first)
 - **Dark/Light Mode:** Her iki projede de dark mode desteği (localStorage ile kalıcı)

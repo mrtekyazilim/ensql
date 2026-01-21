@@ -17,7 +17,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   const checkAuthorization = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('adminToken')
 
       if (!token) {
         setIsAuthorized(false)

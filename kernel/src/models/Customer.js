@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const CustomerSchema = new mongoose.Schema({
+  partnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Partner',
+    required: [true, 'Partner ID gereklidir']
+  },
   companyName: {
     type: String,
     required: [true, 'Şirket adı gereklidir'],
@@ -10,7 +15,6 @@ const CustomerSchema = new mongoose.Schema({
   username: {
     type: String,
     required: [true, 'Kullanıcı adı gereklidir'],
-    unique: true,
     trim: true
   },
   password: {
@@ -43,6 +47,9 @@ const CustomerSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Compound unique index: partnerId + username (aynı partner içinde unique)
+CustomerSchema.index({ partnerId: 1, username: 1 }, { unique: true });
 
 // Şifre hashleme middleware
 CustomerSchema.pre('save', async function (next) {
