@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Building2, Filter, Search, Edit2, Trash2, ExternalLink, Users as UsersIcon, CheckCircle, XCircle, Clock, Key, PlayCircle, PauseCircle } from 'lucide-react'
+import { Building2, Search, Edit2, ExternalLink, Users as UsersIcon, CheckCircle, XCircle, Key, PlayCircle, PauseCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Partner {
@@ -50,9 +50,6 @@ export function Partners() {
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null)
   const [filter, setFilter] = useState<'all' | '1month' | '3months' | '6months' | '1year'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deletingPartner, setDeletingPartner] = useState<Partner | null>(null)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [showCustomersModal, setShowCustomersModal] = useState(false)
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])

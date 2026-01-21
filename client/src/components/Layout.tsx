@@ -57,6 +57,17 @@ export function Layout() {
     }
 
     initializeAuth()
+
+    // Connector listesi değiştiğinde yeniden yükle
+    const handleConnectorsRefresh = () => {
+      loadConnectors()
+    }
+
+    window.addEventListener('connectors-refresh', handleConnectorsRefresh)
+
+    return () => {
+      window.removeEventListener('connectors-refresh', handleConnectorsRefresh)
+    }
   }, [])
 
   const loadCurrentUser = () => {

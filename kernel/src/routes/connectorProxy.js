@@ -310,4 +310,100 @@ router.post('/customer/mssql', protect, async (req, res) => {
   }
 });
 
+// ============= TEST ENDPOINTS (JWT Protected, No Connector Record Required) =============
+
+// Test connector datetime - For testing during create/edit without saving
+router.post('/test/datetime', protect, async (req, res) => {
+  try {
+    const { clientId, clientPass } = req.body;
+
+    if (!clientId || !clientPass) {
+      return res.status(400).json({
+        success: false,
+        message: 'clientId ve clientPass gereklidir'
+      });
+    }
+
+    const requestBody = {
+      clientId,
+      clientPass
+    };
+
+    const response = await axios.post(`${CONNECTOR_URL}/datetime`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': clientId,
+        'clientPass': clientPass
+      },
+      timeout: 10000
+    });
+
+    res.json({ success: true, data: response.data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || 'Connector datetime servisi hatası',
+      error: error.response?.data || error.message
+    });
+  }
+});
+
+// Test SQL connection - For testing during create/edit without saving
+router.post('/test/mssql', protect, async (req, res) => {
+  try {
+    const { clientId, clientPass, config, query } = req.body;
+
+    if (!clientId || !clientPass) {
+      return res.status(400).json({
+        success: false,
+        message: 'clientId ve clientPass gereklidir'
+      });
+    }
+
+    if (!config || !query) {
+      return res.status(400).json({
+        success: false,
+        message: 'config ve query gereklidir'
+      });
+    }
+
+    // ConnectorAbi için gerekli formatı hazırla
+    const fullConfig = {
+      ...config,
+      dialect: 'mssql',
+      dialectOptions: {
+        instanceName: ''
+      },
+      options: {
+        encrypt: false,
+        trustServerCertificate: true
+      }
+    };
+
+    const requestBody = {
+      clientId,
+      clientPass,
+      config: fullConfig,
+      query
+    };
+
+    const response = await axios.post(`${CONNECTOR_URL}/mssql`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json',
+        'clientId': clientId,
+        'clientPass': clientPass
+      },
+      timeout: 15000
+    });
+
+    res.json({ success: true, data: response.data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.response?.data?.message || 'Connector mssql servisi hatası',
+      error: error.response?.data || error.message
+    });
+  }
+});
+
 module.exports = router;

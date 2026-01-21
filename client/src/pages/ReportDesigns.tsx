@@ -342,6 +342,16 @@ export function ReportDesigns() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/settings')}
+          className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
+        >
+          <LucideIcons.ArrowLeft className="w-4 h-4 mr-2" />
+          Geri
+        </button>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rapor Tasarımları</h2>
         <div className="flex flex-wrap items-center gap-2 sm:gap-4">

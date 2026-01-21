@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'sonner'
-import { Plus, Trash2, Edit2, Copy, Database, Eye, EyeOff, Plug, CheckCircle } from 'lucide-react'
+import { Plus, Trash2, Edit2, Copy, Database, Eye, EyeOff, Plug, CheckCircle, ArrowLeft } from 'lucide-react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 
 interface Connector {
@@ -20,6 +21,7 @@ interface Connector {
 }
 
 export function Connectors() {
+  const navigate = useNavigate()
   const [connectors, setConnectors] = useState<Connector[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -145,7 +147,9 @@ export function Connectors() {
         toast.success('Connector başarıyla güncellendi!')
         loadConnectors()
         resetForm()
-        setShowModal(false)
+        setShowModal(false)        // Layout'taki connector listesini güncelle
+        window.dispatchEvent(new Event('connectors-refresh'))        // Layout'taki connector listesini güncelle
+        window.dispatchEvent(new Event('connectors-refresh'))
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Connector güncellenemedi')
@@ -169,6 +173,8 @@ export function Connectors() {
       if (response.data.success) {
         toast.success('Connector başarıyla silindi!')
         loadConnectors()
+        // Layout'taki connector listesini güncelle
+        window.dispatchEvent(new Event('connectors-refresh'))
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Connector silinemedi')
@@ -227,6 +233,8 @@ export function Connectors() {
         setShowCopyDialog(false)
         setConnectorToCopy(null)
         setCopyName('')
+        // Layout'taki connector listesini güncelle
+        window.dispatchEvent(new Event('connectors-refresh'))
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Connector kopyalanamadı')
@@ -304,15 +312,14 @@ export function Connectors() {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.post(
-        'http://localhost:13201/api/connector-proxy/datetime',
+        'http://localhost:13201/api/connector-proxy/test/datetime',
         {
+          clientId: formData.clientId,
           clientPass: formData.clientPassword
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'clientId': formData.clientId,
-            'clientPass': formData.clientPassword,
             'Content-Type': 'application/json'
           }
         }
@@ -360,8 +367,9 @@ export function Connectors() {
       const token = localStorage.getItem('clientToken')
 
       const response = await axios.post(
-        'http://localhost:13201/api/connector-proxy/mssql',
+        'http://localhost:13201/api/connector-proxy/test/mssql',
         {
+          clientId: formData.clientId,
           clientPass: formData.clientPassword,
           config: {
             user: formData.sqlUser,
@@ -375,8 +383,6 @@ export function Connectors() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'clientId': formData.clientId,
-            'clientPass': formData.clientPassword,
             'Content-Type': 'application/json'
           }
         }
@@ -419,6 +425,16 @@ export function Connectors() {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/settings')}
+          className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Geri
+        </button>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Connector Yönetimi</h2>
         <button

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
-import { MessageCircle, Send, Loader2, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react'
+import { MessageCircle, Send, Loader2, CheckCircle } from 'lucide-react'
 
 // Custom scrollbar styles
 const scrollbarStyles = `
