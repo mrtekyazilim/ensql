@@ -299,6 +299,8 @@ router.put('/change-password', protect, async (req, res) => {
     let user;
     if (req.user.role === 'admin' || req.user.role === 'user') {
       user = await AdminUser.findById(req.user._id);
+    } else if (req.user.role === 'partner') {
+      user = await Partner.findById(req.user._id);
     } else {
       user = await Customer.findById(req.user._id);
     }

@@ -176,7 +176,7 @@ export function Login() {
                       type="text"
                       required
                       className="appearance-none relative block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors"
-                      placeholder="demo-partner"
+                      placeholder="partner kodu"
                       value={partnerCode}
                       onChange={handlePartnerCodeChange}
                     />

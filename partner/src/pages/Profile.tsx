@@ -25,7 +25,7 @@ export function Profile() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('partnerToken')
       const response = await axios.put(
         'http://localhost:13201/api/auth/change-password',
         {

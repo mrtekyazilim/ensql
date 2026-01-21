@@ -33,11 +33,6 @@ export function Users() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
-  const [partnerInfo, setPartnerInfo] = useState<{
-    partnerName: string
-    username: string
-    hizmetBitisTarihi: string
-  } | null>(null)
 
   // Default hizmet bitiş tarihi: 2 ay sonrası
   const getDefaultBitisTarihi = () => {
@@ -108,24 +103,7 @@ export function Users() {
 
   useEffect(() => {
     loadUsers()
-    loadPartnerInfo()
   }, [])
-
-  const loadPartnerInfo = () => {
-    try {
-      const userStr = localStorage.getItem('partnerUser')
-      if (userStr) {
-        const user = JSON.parse(userStr)
-        setPartnerInfo({
-          partnerName: user.partnerName || user.partnerCode || 'Partner',
-          username: user.username || '',
-          hizmetBitisTarihi: user.hizmetBitisTarihi || ''
-        })
-      }
-    } catch (error) {
-      console.error('Partner bilgisi yüklenemedi:', error)
-    }
-  }
 
   const loadUsers = async () => {
     try {
@@ -339,274 +317,230 @@ export function Users() {
   }).length
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Ana İçerik - Sol Taraf */}
-      <div className="lg:col-span-3">
-        <div className="mb-6">
-          <div className="sm:flex sm:items-center sm:justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Müşteriler</h2>
-            <button
-              onClick={() => {
-                setFormData({
-                  companyName: '',
-                  username: '',
-                  password: '',
-                  hizmetBitisTarihi: getDefaultBitisTarihi(),
-                  yetkiliKisi: '',
-                  cepTelefonu: '',
-                  email: '',
-                  faturaAdresi: '',
-                  sehir: ''
-                })
-                setEditMode(false)
-                setEditingUser(null)
-                setShowModal(true)
-              }}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-3 sm:mt-0"
+    <div>
+      <div className="mb-6">
+        <div className="sm:flex sm:items-center sm:justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Müşteriler</h2>
+          <button
+            onClick={() => {
+              setFormData({
+                companyName: '',
+                username: '',
+                password: '',
+                hizmetBitisTarihi: getDefaultBitisTarihi(),
+                yetkiliKisi: '',
+                cepTelefonu: '',
+                email: '',
+                faturaAdresi: '',
+                sehir: ''
+              })
+              setEditMode(false)
+              setEditingUser(null)
+              setShowModal(true)
+            }}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 mt-3 sm:mt-0"
+          >
+            Yeni Müşteri
+          </button>
+        </div>
+
+        {/* İstatistik Kartları */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <UsersIcon className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-blue-100 truncate">Toplam Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{totalUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-green-100 truncate">Aktif Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{activeUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <XCircle className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-red-100 truncate">Pasif Müşteri</dt>
+                    <dd className="text-3xl font-bold text-white">{inactiveUsers}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700 overflow-hidden shadow-lg rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Clock className="h-8 w-8 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-yellow-100 truncate">1 Ay İçinde Dolacak</dt>
+                    <dd className="text-3xl font-bold text-white">{expiringSoon}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Müşteri ismi veya kullanıcı adı ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as any)}
+              className="w-full sm:w-auto pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              Yeni Müşteri
-            </button>
-          </div>
-
-          {/* İstatistik Kartları */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 overflow-hidden shadow-lg rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <UsersIcon className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-blue-100 truncate">Toplam Müşteri</dt>
-                      <dd className="text-3xl font-bold text-white">{totalUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 overflow-hidden shadow-lg rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircle className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-green-100 truncate">Aktif Müşteri</dt>
-                      <dd className="text-3xl font-bold text-white">{activeUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 overflow-hidden shadow-lg rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <XCircle className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-red-100 truncate">Pasif Müşteri</dt>
-                      <dd className="text-3xl font-bold text-white">{inactiveUsers}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700 overflow-hidden shadow-lg rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Clock className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-yellow-100 truncate">1 Ay İçinde Dolacak</dt>
-                      <dd className="text-3xl font-bold text-white">{expiringSoon}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <option value="all">Tüm Müşteriler</option>
+              <option value="1month">1 Ay İçinde Dolacak</option>
+              <option value="3months">3 Ay İçinde Dolacak</option>
+              <option value="6months">6 Ay İçinde Dolacak</option>
+              <option value="1year">1 Yıl İçinde Dolacak</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <div className="mb-6">
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Müşteri ismi veya kullanıcı adı ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
-                className="w-full sm:w-auto pl-9 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="all">Tüm Müşteriler</option>
-                <option value="1month">1 Ay İçinde Dolacak</option>
-                <option value="3months">3 Ay İçinde Dolacak</option>
-                <option value="6months">6 Ay İçinde Dolacak</option>
-                <option value="1year">1 Yıl İçinde Dolacak</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {getFilteredUsers().map((user) => (
-              <li key={user._id} className="mt-2 first:mt-0">
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      {user.companyName && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                          <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
-                            {user.companyName}
-                          </p>
-                        </div>
-                      )}
-                      <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate mb-2">
-                        {user.username}
-                      </p>
-
-                      {/* İletişim Bilgileri - Daima görünsün */}
-                      <div className="mb-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                        <div className="text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">Yetkili:</span>{' '}
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {user.iletisimBilgileri?.yetkiliKisi || '-'}
-                          </span>
-                        </div>
-                        <div className="text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">Telefon:</span>{' '}
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {user.iletisimBilgileri?.cepTelefonu || '-'}
-                          </span>
-                        </div>
-                        <div className="text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">Email:</span>{' '}
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {user.iletisimBilgileri?.email || '-'}
-                          </span>
-                        </div>
-                        <div className="text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">Şehir:</span>{' '}
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {user.iletisimBilgileri?.sehir || '-'}
-                          </span>
-                        </div>
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
+        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          {getFilteredUsers().map((user) => (
+            <li key={user._id} className="mt-2 first:mt-0">
+              <div className="px-4 py-4 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    {user.companyName && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                        <p className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {user.companyName}
+                        </p>
                       </div>
+                    )}
+                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate mb-2">
+                      {user.username}
+                    </p>
 
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Hizmet Bitiş: {new Date(user.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Sorgu Sayısı: {user.kullanimIstatistikleri?.toplamSorguSayisi || 0}
-                        </p>
-                        {user.kullanimIstatistikleri?.sonGirisTarihi && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Son Aktivite: {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleDateString('tr-TR')} {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        )}
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isUserActive(user.hizmetBitisTarihi)
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                          }`}>
-                          {isUserActive(user.hizmetBitisTarihi) ? 'Aktif' : 'Pasif'}
+                    {/* İletişim Bilgileri - Daima görünsün */}
+                    <div className="mb-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Yetkili:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.yetkiliKisi || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Telefon:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.cepTelefonu || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Email:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.email || '-'}
+                        </span>
+                      </div>
+                      <div className="text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Şehir:</span>{' '}
+                        <span className="text-gray-600 dark:text-gray-400">
+                          {user.iletisimBilgileri?.sehir || '-'}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleConnectToClient(user)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-                        title="Client uygulamasına bağlan"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Bağlan
-                      </button>
 
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="p-1.5 border border-transparent rounded-md text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                          title="Düzenle"
-                        >
-                          <Edit2 className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-1.5 border border-transparent rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                          title="Sil"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Hizmet Bitiş: {new Date(user.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Sorgu Sayısı: {user.kullanimIstatistikleri?.toplamSorguSayisi || 0}
+                      </p>
+                      {user.kullanimIstatistikleri?.sonGirisTarihi && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Son Aktivite: {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleDateString('tr-TR')} {new Date(user.kullanimIstatistikleri.sonGirisTarihi).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isUserActive(user.hizmetBitisTarihi)
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                        }`}>
+                        {isUserActive(user.hizmetBitisTarihi) ? 'Aktif' : 'Pasif'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleConnectToClient(user)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                      title="Client uygulamasına bağlan"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Bağlan
+                    </button>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="p-1.5 border border-transparent rounded-md text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
+                        title="Düzenle"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="p-1.5 border border-transparent rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        title="Sil"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Sağ Taraf - Partner Bilgileri */}
-      <div className="lg:col-span-1">
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden sticky top-6">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
-              Partner Bilgileri
-            </h3>
-            {partnerInfo ? (
-              <div className="space-y-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Partner İsmi</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-white font-semibold">
-                    {partnerInfo.partnerName}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Kullanıcı Adı</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {partnerInfo.username}
-                  </dd>
-                </div>
-                {partnerInfo.hizmetBitisTarihi && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Hizmet Bitiş Tarihi</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {new Date(partnerInfo.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
-                    </dd>
-                  </div>
-                )}
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Partner bilgisi yüklenemedi
-              </p>
-            )}
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
       </div>
-
       {showModal && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
