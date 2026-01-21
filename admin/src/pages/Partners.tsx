@@ -60,6 +60,9 @@ export function Partners() {
   const [showActivateModal, setShowActivateModal] = useState(false)
   const [activatingPartner, setActivatingPartner] = useState<Partner | null>(null)
   const [activatePartnerCode, setActivatePartnerCode] = useState('')
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false)
+  const [deactivatingPartner, setDeactivatingPartner] = useState<Partner | null>(null)
+  const [deactivatePartnerCode, setDeactivatePartnerCode] = useState('')
 
   // Default hizmet bitiş tarihi: 2 ay sonrası
   const getDefaultBitisTarihi = () => {
@@ -310,22 +313,10 @@ export function Partners() {
 
   const handleTogglePartnerStatus = async (partner: Partner) => {
     if (partner.aktif) {
-      // Pasifleştir
-      try {
-        const token = localStorage.getItem('adminToken')
-        const response = await axios.put(
-          `http://localhost:13201/api/partners/${partner._id}`,
-          { aktif: false },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-
-        if (response.data.success) {
-          toast.success(`${partner.partnerName} pasifleştirildi. Tüm müşteri oturumları kapatıldı.`)
-          loadPartners()
-        }
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Partner pasifleştirilemedi')
-      }
+      // Pasifleştirmek için modal aç
+      setDeactivatingPartner(partner)
+      setDeactivatePartnerCode('')
+      setShowDeactivateModal(true)
     } else {
       // Aktifleştirmek için modal aç
       setActivatingPartner(partner)
@@ -356,9 +347,45 @@ export function Partners() {
         setActivatePartnerCode('')
         toast.success(`${activatingPartner.partnerName} aktifleştirildi!`)
         loadPartners()
+        // Form açıksa güncelle
+        if (editingPartner && editingPartner._id === activatingPartner._id) {
+          setEditingPartner({ ...activatingPartner, aktif: true })
+        }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Partner aktifleştirilemedi')
+    }
+  }
+
+  const handleDeactivatePartner = async () => {
+    if (!deactivatingPartner) return
+
+    if (deactivatePartnerCode !== deactivatingPartner.partnerCode) {
+      toast.error('Partner kodu eşleşmiyor!')
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken')
+      const response = await axios.put(
+        `http://localhost:13201/api/partners/${deactivatingPartner._id}`,
+        { aktif: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (response.data.success) {
+        setShowDeactivateModal(false)
+        setDeactivatingPartner(null)
+        setDeactivatePartnerCode('')
+        toast.success(`${deactivatingPartner.partnerName} pasifleştirildi. Tüm müşteri oturumları kapatıldı.`)
+        loadPartners()
+        // Form açıksa güncelle
+        if (editingPartner && editingPartner._id === deactivatingPartner._id) {
+          setEditingPartner({ ...deactivatingPartner, aktif: false })
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Partner pasifleştirilemedi')
     }
   }
 
@@ -577,21 +604,12 @@ export function Partners() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => handleTogglePartnerStatus(partner)}
-                          className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${partner.aktif
-                              ? 'text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300'
-                              : 'text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
-                            }`}
-                          title={partner.aktif ? 'Pasifleştir' : 'Aktifleştir'}
-                        >
-                          {partner.aktif ? <PauseCircle className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
-                        </button>
-                        <button
                           onClick={() => handleConnectToPartner(partner)}
-                          className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 rounded"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium"
                           title="Partner Paneline Bağlan"
                         >
-                          <ExternalLink className="h-5 w-5" />
+                          <ExternalLink className="h-4 w-4" />
+                          Bağlan
                         </button>
                         <button
                           onClick={() => handleEditPartner(partner)}
@@ -751,24 +769,52 @@ export function Partners() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowModal(false)
-                      setEditMode(false)
-                      setEditingPartner(null)
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    İptal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    {editMode ? 'Güncelle' : 'Oluştur'}
-                  </button>
+                <div className="flex justify-between items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+                  {/* Sol taraf - Durum butonları (sadece edit modunda) */}
+                  {editMode && editingPartner && (
+                    <div className="flex gap-2">
+                      {editingPartner.aktif ? (
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePartnerStatus(editingPartner)}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                        >
+                          <PauseCircle className="h-4 w-4" />
+                          Pasifleştir
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleTogglePartnerStatus(editingPartner)}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md hover:bg-green-100 dark:hover:bg-green-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          <PlayCircle className="h-4 w-4" />
+                          Aktifleştir
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sağ taraf - İptal ve Kaydet butonları */}
+                  <div className="flex gap-3 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false)
+                        setEditMode(false)
+                        setEditingPartner(null)
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      {editMode ? 'Güncelle' : 'Oluştur'}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -894,6 +940,49 @@ export function Partners() {
                 className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Aktifleştir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pasifleştirme Onay Modal */}
+      {showDeactivateModal && deactivatingPartner && (
+        <div className="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              Partner Pasifleştir
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <strong className="text-gray-900 dark:text-white">{deactivatingPartner.partnerName}</strong> partnerini pasifleştirmek için partner kodunu yazın:
+            </p>
+            <p className="text-xs text-red-600 dark:text-red-400 mb-4">
+              ⚠️ Partnere ait tüm müşteri oturumları kapatılacaktır!
+            </p>
+            <input
+              type="text"
+              value={deactivatePartnerCode}
+              onChange={(e) => setDeactivatePartnerCode(e.target.value)}
+              placeholder={deactivatingPartner.partnerCode}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mb-4"
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeactivateModal(false)
+                  setDeactivatingPartner(null)
+                  setDeactivatePartnerCode('')
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleDeactivatePartner}
+                disabled={deactivatePartnerCode !== deactivatingPartner.partnerCode}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Pasifleştir
               </button>
             </div>
           </div>

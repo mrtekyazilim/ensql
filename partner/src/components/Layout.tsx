@@ -11,6 +11,7 @@ export function Layout() {
   const [loading, setLoading] = useState(true)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ username: string; role: string } | null>(null)
+  const [partnerName, setPartnerName] = useState<string>('')
   const location = useLocation()
 
   useEffect(() => {
@@ -19,10 +20,23 @@ export function Layout() {
 
     if (token) {
       loadCurrentUser()
+      loadPartnerName()
     } else {
       setLoading(false)
     }
   }, [])
+
+  const loadPartnerName = () => {
+    try {
+      const userStr = localStorage.getItem('partnerUser')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        setPartnerName(user.partnerName || user.partnerCode || 'Partner')
+      }
+    } catch (error) {
+      console.error('Partner ismi yüklenemedi:', error)
+    }
+  }
 
   const loadCurrentUser = async () => {
     try {
@@ -109,8 +123,16 @@ export function Layout() {
                       className="fixed inset-0 z-10"
                       onClick={() => setShowUserMenu(false)}
                     />
-                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
                       <div className="py-1">
+                        {partnerName && (
+                          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Partner</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                              {partnerName}
+                            </p>
+                          </div>
+                        )}
                         <a
                           href="/profile"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
