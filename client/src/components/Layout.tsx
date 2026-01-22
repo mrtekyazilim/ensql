@@ -8,6 +8,7 @@ import { usePWAInstall } from '../hooks/usePWAInstall'
 import { User, LogOut, Database, ChevronDown, Settings, Monitor, Download, Menu, X, BarChart3, MessageCircle } from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'sonner'
+import config from '../config.js'
 
 export function Layout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -37,7 +38,7 @@ export function Layout() {
 
           // Backend'e yeni session oluştur
           try {
-            await axios.post('http://localhost:13201/api/sessions/create', {
+            await axios.post(`${config.API_URL}/sessions/create`, {
               deviceId,
               deviceName: 'Client App',
               browserInfo: navigator.userAgent
@@ -80,7 +81,7 @@ export function Layout() {
   const loadConnectors = async () => {
     try {
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get('http://localhost:13201/api/connectors', {
+      const response = await axios.get(`${config.API_URL}/connectors`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -109,8 +110,8 @@ export function Layout() {
           const deviceId = localStorage.getItem('deviceId')
 
           try {
-            const updateResponse = await axios.put(
-              'http://localhost:13201/api/sessions/active-connector',
+            await axios.put(
+              `${config.API_URL}/sessions/active-connector`,
               { deviceId, connectorId: selectedConnector._id },
               { headers: { Authorization: `Bearer ${token}` } }
             )
@@ -136,7 +137,7 @@ export function Layout() {
       const deviceId = localStorage.getItem('deviceId')
 
       await axios.put(
-        'http://localhost:13201/api/sessions/active-connector',
+        `${config.API_URL}/sessions/active-connector`,
         { deviceId, connectorId: connector._id },
         { headers: { Authorization: `Bearer ${token}` } }
       )

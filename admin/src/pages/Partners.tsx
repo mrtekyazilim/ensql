@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Building2, Search, Edit2, ExternalLink, Users as UsersIcon, CheckCircle, XCircle, Key, PlayCircle, PauseCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import config from '../config.js'
 
 interface Partner {
   _id: string
@@ -145,7 +146,7 @@ export function Partners() {
   const loadPartners = async () => {
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await axios.get('http://localhost:13201/api/partners', {
+      const response = await axios.get(`${config.API_URL}/partners`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -163,7 +164,7 @@ export function Partners() {
     setLoadingCustomers(true)
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await axios.get(`http://localhost:13201/api/partners/${partnerId}/customers`, {
+      const response = await axios.get(`${config.API_URL}/partners/${partnerId}/customers`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -204,7 +205,7 @@ export function Partners() {
         }
       }
 
-      const response = await axios.post('http://localhost:13201/api/partners', formattedData, {
+      const response = await axios.post(`${config.API_URL}/partners`, formattedData, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -279,7 +280,7 @@ export function Partners() {
       }
 
       const response = await axios.put(
-        `http://localhost:13201/api/partners/${editingPartner._id}`,
+        `${config.API_URL}/partners/${editingPartner._id}`,
         formattedData,
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -333,7 +334,7 @@ export function Partners() {
     try {
       const token = localStorage.getItem('adminToken')
       const response = await axios.put(
-        `http://localhost:13201/api/partners/${activatingPartner._id}/activate`,
+        `${config.API_URL}/partners/${activatingPartner._id}/activate`,
         { partnerCode: activatePartnerCode },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -365,7 +366,7 @@ export function Partners() {
     try {
       const token = localStorage.getItem('adminToken')
       const response = await axios.put(
-        `http://localhost:13201/api/partners/${deactivatingPartner._id}`,
+        `${config.API_URL}/partners/${deactivatingPartner._id}`,
         { aktif: false },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -392,7 +393,7 @@ export function Partners() {
       const deviceId = `admin-panel-${Date.now()}`
 
       const response = await axios.post(
-        `http://localhost:13201/api/auth/admin-login-as-partner/${partner._id}`,
+        `${config.API_URL}/auth/admin-login-as-partner/${partner._id}`,
         {
           deviceId,
           deviceName: 'Admin Panel',
@@ -402,7 +403,7 @@ export function Partners() {
       )
 
       if (response.data.success) {
-        const partnerUrl = `http://localhost:13202/auto-login?token=${encodeURIComponent(response.data.token)}&user=${encodeURIComponent(JSON.stringify(response.data.user))}&deviceId=${encodeURIComponent(deviceId)}`
+        const partnerUrl = `${config.PARTNER_URL}/auto-login?token=${encodeURIComponent(response.data.token)}&user=${encodeURIComponent(JSON.stringify(response.data.user))}&deviceId=${encodeURIComponent(deviceId)}`
         window.open(partnerUrl, '_blank')
         toast.success(`${partner.partnerName} hesabına bağlanıldı`)
       }

@@ -4,6 +4,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import * as LucideIcons from 'lucide-react'
 import * as XLSX from 'xlsx'
+import config from '../config.js'
 
 interface Report {
   _id: string
@@ -51,7 +52,7 @@ export function ReportExecute() {
   const loadReport = async () => {
     try {
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get(`http://localhost:13201/api/reports/${id}`, {
+      const response = await axios.get(`${config.API_URL}/reports/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -173,7 +174,7 @@ export function ReportExecute() {
       sqlQuery = sqlQuery.replace(/@search/g, `'${escapedSearch}'`)
 
       const response = await axios.post(
-        `http://localhost:13201/api/reports/${report._id}/execute`,
+        `${config.API_URL}/reports/${report._id}/execute`,
         {
           date1,
           date2,

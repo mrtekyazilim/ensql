@@ -4,6 +4,7 @@ import axios from 'axios'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { Logo } from '../components/Logo'
 import { Settings, Users, BarChart3, Shield } from 'lucide-react'
+import config from '../config.js'
 
 export function Login() {
   const [username, setUsername] = useState('')
@@ -47,7 +48,7 @@ export function Login() {
       const deviceId = getDeviceId()
       const browserInfo = getBrowserInfo()
 
-      const response = await axios.post('http://localhost:13201/api/auth/admin/login', {
+      const response = await axios.post(`${config.API_URL}/auth/admin/login`, {
         username,
         password,
         deviceId,

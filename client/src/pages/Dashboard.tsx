@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import * as LucideIcons from 'lucide-react'
-import { toast } from 'sonner'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import config from '../config.js'
 
 interface DashboardReport {
   _id: string
@@ -48,7 +48,7 @@ export function Dashboard() {
   const loadCurrentUser = async () => {
     try {
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get('http://localhost:13201/api/auth/me', {
+      const response = await axios.get(`${config.API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -101,7 +101,7 @@ export function Dashboard() {
 
     try {
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get('http://localhost:13201/api/reports', {
+      const response = await axios.get(`${config.API_URL}/reports`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -128,7 +128,7 @@ export function Dashboard() {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.post(
-        `http://localhost:13201/api/reports/${reportId}/execute`,
+        `${config.API_URL}/reports/${reportId}/execute`,
         { date1: '', date2: '', search: '' },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -302,7 +302,7 @@ export function Dashboard() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {chartData.map((entry, index) => (
+                  {chartData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

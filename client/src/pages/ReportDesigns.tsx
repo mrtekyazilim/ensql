@@ -4,6 +4,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import * as LucideIcons from 'lucide-react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import config from '../config.js'
 
 interface Report {
   showDate1: any
@@ -54,7 +55,7 @@ export function ReportDesigns() {
   const loadReports = async () => {
     try {
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get('http://localhost:13201/api/reports?includeInactive=true', {
+      const response = await axios.get(`${config.API_URL}/reports?includeInactive=true`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -77,7 +78,7 @@ export function ReportDesigns() {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.delete(
-        `http://localhost:13201/api/reports/${reportToDelete._id}`,
+        `${config.API_URL}/reports/${reportToDelete._id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -123,7 +124,7 @@ export function ReportDesigns() {
       }
 
       const response = await axios.post(
-        'http://localhost:13201/api/reports',
+        `${config.API_URL}/reports`,
         copyData,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -146,7 +147,7 @@ export function ReportDesigns() {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.put(
-        `http://localhost:13201/api/reports/${reportId}/reorder`,
+        `${config.API_URL}/reports/${reportId}/reorder`,
         { direction },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -280,7 +281,7 @@ export function ReportDesigns() {
         const report = importedReports[parseInt(index)]
         try {
           const response = await axios.post(
-            'http://localhost:13201/api/reports',
+            `${config.API_URL}/reports`,
             report,
             {
               headers: { Authorization: `Bearer ${token}` }

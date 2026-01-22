@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Activity, Clock, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react'
+import config from '../config.js'
 
 interface ActivityItem {
   _id: string
@@ -24,7 +25,7 @@ export function Reports() {
   const loadActivities = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.get('http://localhost:13201/api/activities?limit=100', {
+      const response = await axios.get(`${config.API_URL}/activities?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -137,8 +138,8 @@ export function Reports() {
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${filter === 'all'
-              ? 'bg-blue-600 text-white dark:bg-blue-500'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ? 'bg-blue-600 text-white dark:bg-blue-500'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
         >
           Tümü ({activities.length})
@@ -146,8 +147,8 @@ export function Reports() {
         <button
           onClick={() => setFilter('success')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${filter === 'success'
-              ? 'bg-green-600 text-white dark:bg-green-500'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ? 'bg-green-600 text-white dark:bg-green-500'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
         >
           Başarılı ({activities.filter(a => a.type === 'success').length})
@@ -155,8 +156,8 @@ export function Reports() {
         <button
           onClick={() => setFilter('warning')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${filter === 'warning'
-              ? 'bg-yellow-600 text-white dark:bg-yellow-500'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ? 'bg-yellow-600 text-white dark:bg-yellow-500'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
         >
           Uyarı ({activities.filter(a => a.type === 'warning').length})
@@ -164,8 +165,8 @@ export function Reports() {
         <button
           onClick={() => setFilter('error')}
           className={`px-4 py-2 rounded-md text-sm font-medium ${filter === 'error'
-              ? 'bg-red-600 text-white dark:bg-red-500'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            ? 'bg-red-600 text-white dark:bg-red-500'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
             }`}
         >
           Hata ({activities.filter(a => a.type === 'error').length})

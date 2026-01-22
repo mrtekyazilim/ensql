@@ -3,20 +3,36 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  server: {
-    port: 13205,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:13201',
-        changeOrigin: true,
+export default defineConfig(({ command }) => {
+  // Development'ta config.dev.js'i config.js olarak kopyala
+  if (command === 'serve') {
+    const fs = require('fs')
+    const configDevPath = path.resolve(__dirname, './src/config.dev.js')
+    const configPath = path.resolve(__dirname, './src/config.js')
+    if (fs.existsSync(configDevPath)) {
+      fs.copyFileSync(configDevPath, configPath)
+    }
+  }
+
+  return {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
       },
     },
-  },
+    build: {
+      outDir: '../dist/admin',
+      emptyOutDir: true,
+    },
+    server: {
+      port: 13205,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:13201',
+          changeOrigin: true,
+        },
+      },
+    },
+  }
 })

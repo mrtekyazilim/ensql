@@ -6,6 +6,7 @@ import { Logo } from '../components/Logo'
 import { usePWAInstall } from '../hooks/usePWAInstall'
 import { Monitor, Smartphone, Tablet, Zap, Shield, TrendingUp, Download } from 'lucide-react'
 import { toast } from 'sonner'
+import config from '../config.js'
 
 export function Login() {
   const [partnerCode, setPartnerCode] = useState('')
@@ -85,7 +86,7 @@ export function Login() {
       const deviceId = getDeviceId()
       const browserInfo = getBrowserInfo()
 
-      const response = await axios.post('http://localhost:13201/api/auth/client/login', {
+      const response = await axios.post(`${config.API_URL}/auth/client/login`, {
         partnerCode,
         username,
         password,

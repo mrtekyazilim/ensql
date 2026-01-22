@@ -1,0 +1,5 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    ".\\distall.ps1": true
+  }
+}

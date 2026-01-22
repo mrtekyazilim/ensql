@@ -5,6 +5,7 @@ import { ThemeToggle } from '../components/ThemeToggle'
 import { Logo } from '../components/Logo'
 import { Settings, Users, BarChart3, Shield } from 'lucide-react'
 import { toast } from 'sonner'
+import config from '../config.js'
 
 export function Login() {
   const [partnerCode, setPartnerCode] = useState('')
@@ -61,7 +62,7 @@ export function Login() {
       const deviceId = getDeviceId()
       const browserInfo = getBrowserInfo()
 
-      const response = await axios.post('http://localhost:13201/api/auth/partner/login', {
+      const response = await axios.post(`${config.API_URL}/auth/partner/login`, {
         partnerCode,
         username,
         password,

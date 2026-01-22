@@ -1,6 +1,3 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-
 interface User {
   _id: string
   companyName?: string

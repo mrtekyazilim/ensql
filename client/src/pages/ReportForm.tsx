@@ -4,6 +4,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import * as LucideIcons from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import config from '../config.js'
 
 interface ReportFormData {
   raporAdi: string
@@ -122,7 +123,7 @@ export function ReportForm() {
     try {
       setLoading(true)
       const token = localStorage.getItem('clientToken')
-      const response = await axios.get(`http://localhost:13201/api/reports/${id}`, {
+      const response = await axios.get(`${config.API_URL}/reports/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -213,7 +214,7 @@ export function ReportForm() {
 
       // Test query via customer/mssql endpoint (uses JWT auth + active session)
       const response = await axios.post(
-        'http://localhost:13201/api/connector-proxy/customer/mssql',
+        `${config.API_URL}/connector-proxy/customer/mssql`,
         {
           query: processedQuery
         },
@@ -276,7 +277,7 @@ export function ReportForm() {
       if (isEdit) {
         // Update existing report
         const response = await axios.put(
-          `http://localhost:13201/api/reports/${id}`,
+          `${config.API_URL}/reports/${id}`,
           formData,
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -290,7 +291,7 @@ export function ReportForm() {
       } else {
         // Create new report
         const response = await axios.post(
-          'http://localhost:13201/api/reports',
+          `${config.API_URL}/reports`,
           formData,
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -304,42 +305,6 @@ export function ReportForm() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'İşlem başarısız')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCopy = async () => {
-    if (!id || !formData.raporAdi) {
-      toast.error('Kopyalanacak rapor bulunamadı')
-      return
-    }
-
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('clientToken')
-
-      // Create copy with modified name and inactive status
-      const copyData = {
-        ...formData,
-        raporAdi: `${formData.raporAdi} - Kopya 1`,
-        aktif: false
-      }
-
-      const response = await axios.post(
-        'http://localhost:13201/api/reports',
-        copyData,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-
-      if (response.data.success) {
-        toast.success('Rapor kopyalandı')
-        navigate(`/report-designs/${response.data.report._id}`)
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Kopya oluşturulamadı')
     } finally {
       setLoading(false)
     }
@@ -989,7 +954,7 @@ export function ReportForm() {
                               fill="#8884d8"
                               dataKey="value"
                             >
-                              {chartData.map((entry, index) => (
+                              {chartData.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>

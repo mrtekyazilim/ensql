@@ -1,0 +1,273 @@
+const express = require('express');
+const router = express.Router();
+const Connector = require('../models/Connector');
+const { protect } = require('../middleware/auth');
+const { randomUUID } = require('crypto');
+const axios = require('axios');
+
+// Kullanıcının tüm connector'larını listele
+router.get('/', protect, async (req, res) => {
+  try {
+    const connectors = await Connector.find({ customerId: req.user._id })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: connectors.length,
+      connectors
+    });
+  } catch (error) {
+    console.error('Get connectors error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Connector detayı
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const connector = await Connector.findById(req.params.id);
+
+    if (!connector) {
+      return res.status(404).json({
+        success: false,
+        message: 'Connector bulunamadı'
+      });
+    }
+
+    // Sadece kendi connector'ına erişebilir
+    if (connector.customerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    res.json({
+      success: true,
+      connector
+    });
+  } catch (error) {
+    console.error('Get connector error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Yeni connector oluştur
+router.post('/', protect, async (req, res) => {
+  try {
+    const { connectorName, clientId: userClientId, clientPassword: userClientPassword, sqlServerConfig } = req.body;
+
+    if (!connectorName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Connector adı gereklidir'
+      });
+    }
+
+    if (!sqlServerConfig || !sqlServerConfig.server || !sqlServerConfig.database ||
+      !sqlServerConfig.user || !sqlServerConfig.password) {
+      return res.status(400).json({
+        success: false,
+        message: 'SQL Server bağlantı bilgileri eksik'
+      });
+    }
+
+    // ClientId ve clientPassword kullanıcıdan geliyorsa kullan, yoksa otomatik oluştur
+    const clientId = userClientId || randomUUID();
+    const clientPassword = userClientPassword || randomUUID();
+
+    const connector = await Connector.create({
+      customerId: req.user._id,
+      connectorName,
+      clientId,
+      clientPassword,
+      sqlServerConfig
+    });
+
+    res.status(201).json({
+      success: true,
+      connector: {
+        id: connector._id,
+        connectorName: connector.connectorName,
+        clientId: connector.clientId,
+        clientPassword: clientPassword, // Sadece bu seferlik düz metin olarak dön
+        sqlServerConfig: connector.sqlServerConfig,
+        aktif: connector.aktif
+      }
+    });
+  } catch (error) {
+    console.error('Create connector error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Connector güncelle
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const { connectorName, clientId, clientPassword, sqlServerConfig, aktif } = req.body;
+
+    const connector = await Connector.findById(req.params.id);
+
+    if (!connector) {
+      return res.status(404).json({
+        success: false,
+        message: 'Connector bulunamadı'
+      });
+    }
+
+    // Sadece kendi connector'ını güncelleyebilir
+    if (connector.customerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // Güncellenebilir alanlar
+    if (connectorName) connector.connectorName = connectorName;
+    if (clientId) connector.clientId = clientId;
+    if (clientPassword) connector.clientPassword = clientPassword;
+    if (sqlServerConfig) connector.sqlServerConfig = sqlServerConfig;
+    if (typeof aktif !== 'undefined') connector.aktif = aktif;
+
+    await connector.save();
+
+    res.json({
+      success: true,
+      connector: {
+        id: connector._id,
+        connectorName: connector.connectorName,
+        clientId: connector.clientId,
+        clientPassword: connector.clientPassword,
+        sqlServerConfig: connector.sqlServerConfig,
+        aktif: connector.aktif
+      }
+    });
+  } catch (error) {
+    console.error('Update connector error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Connector sil
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const connector = await Connector.findById(req.params.id);
+
+    if (!connector) {
+      return res.status(404).json({
+        success: false,
+        message: 'Connector bulunamadı'
+      });
+    }
+
+    // Sadece kendi connector'ını silebilir
+    if (connector.customerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    await connector.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Connector silindi'
+    });
+  } catch (error) {
+    console.error('Delete connector error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+// Connector test - ConnectorAbi datetime endpoint'ini çağır
+router.post('/:id/test', protect, async (req, res) => {
+  try {
+    const connector = await Connector.findById(req.params.id);
+
+    if (!connector) {
+      return res.status(404).json({
+        success: false,
+        message: 'Connector bulunamadı'
+      });
+    }
+
+    // Sadece kendi connector'ını test edebilir
+    if (connector.customerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bu işlem için yetkiniz yok'
+      });
+    }
+
+    // ConnectorAbi datetime endpoint'ini çağır
+    try {
+      const response = await axios.post(
+        'https://kernel.connectorabi.com/api/v1/datetime',
+        {
+          clientId: connector.clientId,
+          clientPass: connector.clientPassword
+        },
+        {
+          headers: {
+            'clientId': connector.clientId,
+            'clientPass': connector.clientPassword,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000 // 10 saniye timeout
+        }
+      );
+
+      res.json({
+        success: true,
+        message: 'Connector bağlantısı başarılı',
+        data: response.data
+      });
+    } catch (connectorError) {
+      console.error('Connector test error:', connectorError.message);
+
+      let errorMessage = 'Connector bağlantısı başarısız';
+      if (connectorError.response) {
+        if (connectorError.response.status === 401) {
+          errorMessage = 'EnSQL Connector ClientId veya ClientPassword yanlış';
+        } else {
+          errorMessage = connectorError.response.data?.message || connectorError.response.statusText;
+        }
+      } else if (connectorError.code === 'ECONNABORTED') {
+        errorMessage = 'Bağlantı zaman aşımına uğradı';
+      } else if (connectorError.code === 'ENOTFOUND') {
+        errorMessage = 'ConnectorAbi sunucusuna ulaşılamıyor';
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: errorMessage,
+        error: connectorError.message
+      });
+    }
+  } catch (error) {
+    console.error('Test connector error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası'
+    });
+  }
+});
+
+module.exports = router;

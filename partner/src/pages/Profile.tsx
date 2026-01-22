@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
+import config from '../config.js'
 
 export function Profile() {
   const [loading, setLoading] = useState(false)
@@ -18,7 +19,7 @@ export function Profile() {
   const loadPartnerInfo = async () => {
     try {
       const token = localStorage.getItem('partnerToken')
-      const response = await axios.get('http://localhost:13201/api/auth/me', {
+      const response = await axios.get(`${config.API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -47,7 +48,7 @@ export function Profile() {
     try {
       const token = localStorage.getItem('partnerToken')
       const response = await axios.put(
-        'http://localhost:13201/api/auth/change-password',
+        `${config.API_URL}/auth/change-password`,
         {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword

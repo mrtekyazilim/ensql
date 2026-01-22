@@ -51,7 +51,7 @@ export function usePWAInstall() {
 
     try {
       await deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
+      await deferredPrompt.userChoice
 
       setDeferredPrompt(null)
       setIsInstallable(false)

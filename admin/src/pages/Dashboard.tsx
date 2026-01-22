@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { TrendingUp, Clock, AlertCircle, Database } from 'lucide-react'
+import config from '../config.js'
 
 interface Stats {
   totalUsers: number
@@ -62,7 +63,7 @@ export function Dashboard() {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await axios.get('http://localhost:13201/api/customers', {
+      const response = await axios.get(`${config.API_URL}/customers`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -106,7 +107,7 @@ export function Dashboard() {
   const loadActivities = async () => {
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await axios.get('http://localhost:13201/api/activities?limit=5', {
+      const response = await axios.get(`${config.API_URL}/activities?limit=5`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { MessageCircle, Send, Loader2, CheckCircle } from 'lucide-react'
+import config from '../config.js'
 
 // Custom scrollbar styles
 const scrollbarStyles = `
@@ -110,7 +111,7 @@ const ChatReports: React.FC = () => {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.post(
-        'http://localhost:13201/api/chat/ask',
+        `${config.API_URL}/chat/ask`,
         { message: inputMessage },
         {
           headers: {
@@ -171,7 +172,7 @@ const ChatReports: React.FC = () => {
     try {
       const token = localStorage.getItem('clientToken')
       const response = await axios.post(
-        'http://localhost:13201/api/chat/ask',
+        `${config.API_URL}/chat/ask`,
         {
           message: messageText,
           reportId: suggestion._id // Direkt rapor ID'si gönder

@@ -5,6 +5,7 @@ import { Copyright } from './Copyright'
 import { Logo } from './Logo'
 import { LayoutDashboard, Users, FileText, Activity, User, ChevronDown, LogOut, UserCog } from 'lucide-react'
 import axios from 'axios'
+import config from '../config.js'
 
 export function Layout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -43,7 +44,7 @@ export function Layout() {
   const loadCurrentUser = async () => {
     try {
       const token = localStorage.getItem('partnerToken')
-      const response = await axios.get('http://localhost:13201/api/auth/me', {
+      const response = await axios.get(`${config.API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 

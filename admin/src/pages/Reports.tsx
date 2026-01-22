@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Activity, Clock, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react'
+import config from '../config.js'
 
 interface ActivityItem {
   _id: string
@@ -24,7 +25,7 @@ export function Reports() {
   const loadActivities = async () => {
     try {
       const token = localStorage.getItem('adminToken')
-      const response = await axios.get('http://localhost:13201/api/activities?limit=100', {
+      const response = await axios.get(`${config.API_URL}/activities?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
