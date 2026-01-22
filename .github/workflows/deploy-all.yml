@@ -1,0 +1,76 @@
+name: Deploy ENSQL
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "dist/kernel/**"
+      - "dist/admin/**"
+      - "dist/client/**"
+      - "dist/web/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy ENSQL to VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy ENSQL to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            set -e
+            echo "🚀 Starting deployment...💪"
+
+            cd ${{ secrets.VPS_DEPLOY_PATH }}/src
+
+            echo "📥 Pulling latest code..."
+            git fetch origin && git reset --hard origin/main
+
+
+            echo "🚚 Deploying Admin..."
+            rm -r ${{ secrets.VPS_DEPLOY_PATH }}/admin/*
+            cp -r ${{ secrets.VPS_DEPLOY_PATH }}/src/dist/admin/* ${{ secrets.VPS_DEPLOY_PATH }}/admin/
+
+            echo "🚚 Deploying Partner..."
+            rm -r ${{ secrets.VPS_DEPLOY_PATH }}/partner/*
+            cp -r ${{ secrets.VPS_DEPLOY_PATH }}/src/dist/partner/* ${{ secrets.VPS_DEPLOY_PATH }}/partner/
+
+            echo "🚚 Deploying Client..."
+            rm -r ${{ secrets.VPS_DEPLOY_PATH }}/client/*
+            cp -r ${{ secrets.VPS_DEPLOY_PATH }}/src/dist/client/* ${{ secrets.VPS_DEPLOY_PATH }}/client/
+            echo "🚚 Deploying Web..."
+            rm -r ${{ secrets.VPS_DEPLOY_PATH }}/web/*
+            cp -r ${{ secrets.VPS_DEPLOY_PATH }}/src/dist/web/* ${{ secrets.VPS_DEPLOY_PATH }}/web/
+
+            echo "🚚 Deploying Kernel..."
+            cp -r ${{ secrets.VPS_DEPLOY_PATH }}/src/dist/kernel/* ${{ secrets.VPS_DEPLOY_PATH }}/kernel/
+            cd ${{ secrets.VPS_DEPLOY_PATH }}/kernel
+            yarn install --production
+
+            echo "🔄 Restarting Kernel service..."
+            sudo pm2 restart ensql
+
+            # Health check
+            echo "🏥 Running health check..."
+            sleep 2
+            curl -f http://localhost:13201 || exit 1
+
+            echo "✅ ENSQL Deployment completed successfully!"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ 312Core Kernel deployed successfully to VPS"
+          else
+            echo "❌ 312Core Kernel deployment failed"
+          fi

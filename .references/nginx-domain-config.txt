@@ -1,0 +1,229 @@
+# ========================================
+# EnSQL - Nginx Domain Configuration
+# Ubuntu 24.04 Server
+# ========================================
+# Installation:
+# 1. Save this file as: /etc/nginx/sites-available/ensql
+# 2. Create symlink: sudo ln -s /etc/nginx/sites-available/ensql /etc/nginx/sites-enabled/
+# 3. Test config: sudo nginx -t
+# 4. Reload nginx: sudo systemctl reload nginx
+# 5. Install SSL: sudo certbot --nginx -d ensql.com.tr -d www.ensql.com.tr -d admin.ensql.com.tr -d partner.ensql.com.tr -d app.ensql.com.tr -d kernel.ensql.com.tr
+#    (Certbot will automatically add HTTPS server blocks and redirects)
+# ========================================
+# NOTE: Gzip compression and rate limiting are configured in /etc/nginx/nginx.conf
+# ========================================
+
+# ========================================
+# 1. WEB - Main Website (ensql.com.tr)
+# ========================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ensql.com.tr www.ensql.com.tr;
+
+    root /apps/ensql/web;
+    index index.html;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # React SPA - All routes to index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Static files cache
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.(css|js|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Logs
+    access_log /var/log/nginx/ensql-web-access.log;
+    error_log /var/log/nginx/ensql-web-error.log;
+}
+
+# ========================================
+# 2. ADMIN - Admin Panel (admin.ensql.com.tr)
+# ========================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name admin.ensql.com.tr;
+
+    root /apps/ensql/admin;
+    index index.html;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # React SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Static files cache
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.(css|js|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    access_log /var/log/nginx/ensql-admin-access.log;
+    error_log /var/log/nginx/ensql-admin-error.log;
+}
+
+# ========================================
+# 3. PARTNER - Partner Panel (partner.ensql.com.tr)
+# ========================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name partner.ensql.com.tr;
+
+    root /apps/ensql/partner;
+    index index.html;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # React SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Static files cache
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.(css|js|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    access_log /var/log/nginx/ensql-partner-access.log;
+    error_log /var/log/nginx/ensql-partner-error.log;
+}
+
+# ========================================
+# 4. CLIENT - Customer App (app.ensql.com.tr)
+# ========================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name app.ensql.com.tr;
+
+    root /apps/ensql/client;
+    index index.html;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # PWA manifest and service worker
+    location ~* \.(webmanifest|json)$ {
+        add_header Cache-Control "public, max-age=0";
+        try_files $uri =404;
+    }
+
+    location /sw.js {
+        add_header Cache-Control "public, max-age=0";
+        add_header Service-Worker-Allowed "/";
+        try_files $uri =404;
+    }
+
+    # React SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Static files cache
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|webp)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.(css|js|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    access_log /var/log/nginx/ensql-client-access.log;
+    error_log /var/log/nginx/ensql-client-error.log;
+}
+
+# ========================================
+# 5. KERNEL - Backend API (kernel.ensql.com.tr)
+# ========================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name kernel.ensql.com.tr;
+
+    # Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # Increase body size for file uploads (reports, etc)
+    client_max_body_size 50M;
+
+    # Proxy settings
+    location / {
+        proxy_pass http://127.0.0.1:13201;
+        proxy_http_version 1.1;
+        
+        # Proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # WebSocket support (if needed)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Buffering
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+
+    # Health check endpoint (bypass rate limiting)
+    location /api/health {
+        proxy_pass http://127.0.0.1:13201;
+        access_log off;
+    }
+
+    access_log /var/log/nginx/ensql-kernel-access.log;
+    error_log /var/log/nginx/ensql-kernel-error.log;
+}
