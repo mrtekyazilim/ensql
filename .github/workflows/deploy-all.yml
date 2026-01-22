@@ -36,6 +36,7 @@ jobs:
             echo "📥 Pulling latest code..."
             git fetch origin && git reset --hard origin/main
 
+            sudo chmod -R 777 ${{ secrets.VPS_DEPLOY_PATH }}
 
             echo "🚚 Deploying Admin..."
             rm -r ${{ secrets.VPS_DEPLOY_PATH }}/admin/*
@@ -71,7 +72,7 @@ jobs:
         if: always()
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ 312Core Kernel deployed successfully to VPS"
+            echo "✅ ENSQL deployed successfully to VPS"
           else
-            echo "❌ 312Core Kernel deployment failed"
+            echo "❌ ENSQL deployment failed"
           fi
