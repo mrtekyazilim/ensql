@@ -1,14 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'sonner'
 
 export function Profile() {
   const [loading, setLoading] = useState(false)
+  const [partnerInfo, setPartnerInfo] = useState<any>(null)
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   })
+
+  useEffect(() => {
+    loadPartnerInfo()
+  }, [])
+
+  const loadPartnerInfo = async () => {
+    try {
+      const token = localStorage.getItem('partnerToken')
+      const response = await axios.get('http://localhost:13201/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        setPartnerInfo(response.data.user)
+      }
+    } catch (error) {
+      console.error('Partner bilgisi yüklenemedi:', error)
+    }
+  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +73,63 @@ export function Profile() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Partner Bilgileri */}
+      {partnerInfo && (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+              Partner Bilgileri
+            </h3>
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Partner İsmi</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white font-semibold">{partnerInfo.partnerName || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Partner Kodu</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white font-semibold">{partnerInfo.partnerCode || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Kullanıcı Adı</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">{partnerInfo.username || '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Şehir</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">{partnerInfo.sehir || '-'}</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Hizmet Bitiş Tarihi</dt>
+                <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                  {partnerInfo.hizmetBitisTarihi ? (() => {
+                    const bitisTarihi = new Date(partnerInfo.hizmetBitisTarihi)
+                    const bugun = new Date()
+                    const gunFarki = Math.ceil((bitisTarihi.getTime() - bugun.getTime()) / (1000 * 60 * 60 * 24))
+
+                    if (gunFarki <= 60 && gunFarki > 0) {
+                      return (
+                        <>
+                          {bitisTarihi.toLocaleDateString('tr-TR')} - <span className="font-semibold text-red-600 dark:text-red-400">{gunFarki} Gün kaldı</span>
+                        </>
+                      )
+                    } else if (gunFarki <= 0) {
+                      return (
+                        <>
+                          {bitisTarihi.toLocaleDateString('tr-TR')} - <span className="font-semibold text-red-600 dark:text-red-400">Süresi doldu</span>
+                        </>
+                      )
+                    } else {
+                      return bitisTarihi.toLocaleDateString('tr-TR')
+                    }
+                  })() : '-'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      )}
+
+      {/* Şifre Değiştirme */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-6">

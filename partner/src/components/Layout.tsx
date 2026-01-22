@@ -10,8 +10,9 @@ export function Layout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [currentUser, setCurrentUser] = useState<{ username: string; role: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ username: string; role: string; partnerCode?: string } | null>(null)
   const [partnerName, setPartnerName] = useState<string>('')
+  const [partnerCode, setPartnerCode] = useState<string>('')
   const location = useLocation()
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export function Layout() {
       if (userStr) {
         const user = JSON.parse(userStr)
         setPartnerName(user.partnerName || user.partnerCode || 'Partner')
+        setPartnerCode(user.partnerCode || '')
       }
     } catch (error) {
       console.error('Partner ismi yüklenemedi:', error)
@@ -131,6 +133,11 @@ export function Layout() {
                             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                               {partnerName}
                             </p>
+                            {partnerCode && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                Partner Kod: <span className="font-medium text-gray-900 dark:text-white">{partnerCode}</span>
+                              </p>
+                            )}
                           </div>
                         )}
                         <a
