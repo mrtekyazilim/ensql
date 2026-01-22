@@ -36,7 +36,6 @@ jobs:
             echo "📥 Pulling latest code..."
             git fetch origin && git reset --hard origin/main
 
-            sudo chmod -R 777 ${{ secrets.VPS_DEPLOY_PATH }}
 
             echo "🚚 Deploying Admin..."
             rm -r ${{ secrets.VPS_DEPLOY_PATH }}/admin/*
