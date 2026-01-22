@@ -62,7 +62,7 @@ jobs:
 
             # Health check
             echo "🏥 Running health check..."
-            sleep 2
+            sleep 5
             curl -f http://localhost:13201 || exit 1
 
             echo "✅ ENSQL Deployment completed successfully!"
