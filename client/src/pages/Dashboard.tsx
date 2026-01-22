@@ -35,6 +35,14 @@ export function Dashboard() {
 
   useEffect(() => {
     loadCurrentUser()
+
+    // Sayfa focus olduğunda kullanıcı bilgisini yenile
+    const handleFocus = () => {
+      loadCurrentUser()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const loadCurrentUser = async () => {
@@ -376,12 +384,32 @@ export function Dashboard() {
               <div className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
                 {user.companyName}
               </div>
-              <div className="text-sm mt-1 flex items-end justify-end gap-3">
-                {user.hizmetBitisTarihi && (
-                  <span className="text-xs text-gray-500 dark:text-gray-500">
-                    Hizmet Bitiş: {new Date(user.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
-                  </span>
-                )}
+              <div className="text-sm mt-1 flex items-baseline justify-end gap-3">
+                {user.hizmetBitisTarihi && (() => {
+                  const bitisTarihi = new Date(user.hizmetBitisTarihi)
+                  const bugun = new Date()
+                  const gunFarki = Math.ceil((bitisTarihi.getTime() - bugun.getTime()) / (1000 * 60 * 60 * 24))
+
+                  if (gunFarki <= 60 && gunFarki > 0) {
+                    return (
+                      <span className="text-xs text-gray-500 dark:text-gray-500">
+                        Hizmet Bitiş: <span className="font-semibold text-red-600 dark:text-red-400">{gunFarki} Gün kaldı</span>
+                      </span>
+                    )
+                  } else if (gunFarki <= 0) {
+                    return (
+                      <span className="text-xs text-gray-500 dark:text-gray-500">
+                        Hizmet Bitiş: <span className="font-semibold text-red-600 dark:text-red-400">Süresi doldu</span>
+                      </span>
+                    )
+                  } else {
+                    return (
+                      <span className="text-xs text-gray-500 dark:text-gray-500">
+                        Hizmet Bitiş: {bitisTarihi.toLocaleDateString('tr-TR')}
+                      </span>
+                    )
+                  }
+                })()}
                 <span className="text-gray-600 dark:text-gray-400">@{user.username}</span>
               </div>
             </div>

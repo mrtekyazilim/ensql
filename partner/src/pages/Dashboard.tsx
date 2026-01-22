@@ -63,10 +63,36 @@ export function Dashboard() {
     loadActivities()
     loadSystemMetrics()
     loadPartnerInfo()
+
+    // Sayfa focus olduğunda partner bilgisini yenile
+    const handleFocus = () => {
+      loadPartnerInfo()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
-  const loadPartnerInfo = () => {
+  const loadPartnerInfo = async () => {
     try {
+      const token = localStorage.getItem('partnerToken')
+      const response = await axios.get('http://localhost:13201/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.data.success) {
+        const user = response.data.user
+        setPartnerInfo({
+          partnerName: user.partnerName || user.partnerCode || 'Partner',
+          username: user.username || '',
+          hizmetBitisTarihi: user.hizmetBitisTarihi || ''
+        })
+        // LocalStorage'ı da güncelle
+        localStorage.setItem('partnerUser', JSON.stringify(user))
+      }
+    } catch (error) {
+      console.error('Partner bilgisi yüklenemedi:', error)
+      // Hata durumunda localStorage'dan yükle
       const userStr = localStorage.getItem('partnerUser')
       if (userStr) {
         const user = JSON.parse(userStr)
@@ -76,8 +102,6 @@ export function Dashboard() {
           hizmetBitisTarihi: user.hizmetBitisTarihi || ''
         })
       }
-    } catch (error) {
-      console.error('Partner bilgisi yüklenemedi:', error)
     }
   }
 
@@ -198,12 +222,34 @@ export function Dashboard() {
             </p>
             {(partnerInfo.username || partnerInfo.hizmetBitisTarihi) && (
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                {partnerInfo.hizmetBitisTarihi && (
-                  <>
-                    Hizmet Bitisi: {new Date(partnerInfo.hizmetBitisTarihi).toLocaleDateString('tr-TR')}
-                    {partnerInfo.username ? ' • ' : ''}
-                  </>
-                )}
+                {partnerInfo.hizmetBitisTarihi && (() => {
+                  const bitisTarihi = new Date(partnerInfo.hizmetBitisTarihi)
+                  const bugun = new Date()
+                  const gunFarki = Math.ceil((bitisTarihi.getTime() - bugun.getTime()) / (1000 * 60 * 60 * 24))
+
+                  if (gunFarki <= 60 && gunFarki > 0) {
+                    return (
+                      <>
+                        Hizmet Bitisi: <span className="font-semibold text-red-600 dark:text-red-400">{gunFarki} Gün kaldı</span>
+                        {partnerInfo.username ? ' • ' : ''}
+                      </>
+                    )
+                  } else if (gunFarki <= 0) {
+                    return (
+                      <>
+                        Hizmet Bitisi: <span className="font-semibold text-red-600 dark:text-red-400">Süresi doldu</span>
+                        {partnerInfo.username ? ' • ' : ''}
+                      </>
+                    )
+                  } else {
+                    return (
+                      <>
+                        Hizmet Bitisi: {bitisTarihi.toLocaleDateString('tr-TR')}
+                        {partnerInfo.username ? ' • ' : ''}
+                      </>
+                    )
+                  }
+                })()}
                 {partnerInfo.username}
               </p>
             )}
