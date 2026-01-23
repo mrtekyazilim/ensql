@@ -1,17 +1,17 @@
-// EnSQL Web Configuration - PRODUCTION
+// EnSQL Web Configuration - DEVELOPMENT
 
 const config = {
   // Admin Panel URL
-  ADMIN_URL: 'https://admin.ensql.com.tr',
+  ADMIN_URL: 'http://localhost:13205',
 
   // Partner Panel URL
-  PARTNER_URL: 'https://partner.ensql.com.tr',
+  PARTNER_URL: 'http://localhost:13202',
 
   // Client App URL
-  CLIENT_URL: 'https://app.ensql.com.tr',
+  CLIENT_URL: 'http://localhost:13203',
 
   // Current environment
-  environment: 'production'
+  environment: 'development'
 }
 
 export default config
