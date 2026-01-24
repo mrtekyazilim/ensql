@@ -1,0 +1,19 @@
+{
+  "name": "ensql",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EnSQL - Connector Rapor Uygulamasi",
+  "scripts": {
+    "dev": "concurrently -n \"KERNEL,ADMIN,PARTNER,CLIENT,WEB\" -c \"blue,magenta,cyan,green,yellow\" \"yarn dev:kernel\" \"yarn dev:admin\" \"yarn dev:partner\" \"yarn dev:client\" \"yarn dev:web\"",
+    "dev:kernel": "cd kernel && yarn dev",
+    "dev:admin": "cd admin && yarn dev",
+    "dev:partner": "cd partner && yarn dev",
+    "dev:client": "cd client && yarn dev",
+    "dev:web": "cd web && yarn dev",
+    "dev:all": "yarn dev",
+    "install:all": "cd kernel && yarn install && cd ../admin && yarn install && cd ../partner && yarn install && cd ../client && yarn install && cd ../web && yarn install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

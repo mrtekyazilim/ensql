@@ -1,17 +1,17 @@
-// EnSQL Admin Panel Configuration - PRODUCTION
+// EnSQL Admin Panel Configuration - DEVELOPMENT
 
 const config = {
   // Backend API URL (kernel)
-  API_URL: 'https://kernel.ensql.com.tr/api',
+  API_URL: 'http://localhost:13201/api',
 
   // Partner Panel URL (admin -> partner geçişi için)
-  PARTNER_URL: 'https://partner.ensql.com.tr',
+  PARTNER_URL: 'http://localhost:13202',
 
   // Client App URL (admin -> client geçişi için)
-  CLIENT_URL: 'https://app.ensql.com.tr',
+  CLIENT_URL: 'http://localhost:13203',
 
   // Current environment
-  environment: 'production'
+  environment: 'development'
 }
 
 export default config

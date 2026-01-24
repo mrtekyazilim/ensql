@@ -1,11 +1,11 @@
-// EnSQL Client App Configuration - PRODUCTION
+// EnSQL Client App Configuration - DEVELOPMENT
 
 const config = {
   // Backend API URL (kernel)
-  API_URL: 'https://kernel.ensql.com.tr/api',
+  API_URL: 'http://localhost:13201/api',
 
   // Current environment
-  environment: 'production'
+  environment: 'development'
 }
 
 export default config
