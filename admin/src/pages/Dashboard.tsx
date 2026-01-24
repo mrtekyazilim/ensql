@@ -181,7 +181,7 @@ export function Dashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-blue-100 truncate">Toplam Müşteri</dt>
+                  <dt className="text-sm font-medium text-blue-100 truncate">Toplam Partner</dt>
                   <dd className="text-3xl font-bold text-white">{stats.totalUsers}</dd>
                 </dl>
               </div>
@@ -199,7 +199,7 @@ export function Dashboard() {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-green-100 truncate">Aktif Müşteri</dt>
+                  <dt className="text-sm font-medium text-green-100 truncate">Aktif Partner</dt>
                   <dd className="text-3xl font-bold text-white">{stats.activeUsers}</dd>
                 </dl>
               </div>
