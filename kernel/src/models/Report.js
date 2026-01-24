@@ -26,13 +26,36 @@ const ReportSchema = new mongoose.Schema({
   },
   raporTuru: {
     type: String,
-    enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'dashboard-chart', 'normal-report'],
+    enum: ['dashboard-scalar', 'dashboard-list', 'dashboard-pie', 'dashboard-chart', 'normal-report', 'pivot-report'],
     default: 'normal-report',
     required: true
   },
   sqlSorgusu: {
     type: String,
     required: [true, 'SQL sorgusu gereklidir']
+  },
+  // Pivot settings
+  pivotSettings: {
+    rowField: String,
+    columnField: String,
+    valueField: String,
+    aggregationType: {
+      type: String,
+      enum: ['SUM', 'COUNT', 'AVG', 'MIN', 'MAX'],
+      default: 'SUM'
+    },
+    showRowTotals: {
+      type: Boolean,
+      default: true
+    },
+    showColumnTotals: {
+      type: Boolean,
+      default: true
+    },
+    showGrandTotal: {
+      type: Boolean,
+      default: true
+    }
   },
   // Parametre görünürlük ayarları
   showDate1: {

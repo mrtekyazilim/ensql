@@ -6,18 +6,110 @@ import * as LucideIcons from 'lucide-react'
 import * as XLSX from 'xlsx'
 import config from '../config.js'
 
+interface PivotData {
+  rows: string[]
+  columns: string[]
+  data: Record<string, Record<string, number>>
+  rowTotals: Record<string, number>
+  columnTotals: Record<string, number>
+  grandTotal: number
+}
+
+// Pivot transformation function
+function transformToPivot(
+  rawData: any[],
+  rowField: string,
+  columnField: string,
+  valueField: string,
+  aggregationType: 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX'
+): PivotData {
+  const rows = new Set<string>()
+  const columns = new Set<string>()
+  const dataMap: Record<string, Record<string, number[]>> = {}
+
+  rawData.forEach(row => {
+    const rowValue = String(row[rowField] || '')
+    const colValue = String(row[columnField] || '')
+    const value = Number(row[valueField]) || 0
+
+    rows.add(rowValue)
+    columns.add(colValue)
+
+    if (!dataMap[rowValue]) dataMap[rowValue] = {}
+    if (!dataMap[rowValue][colValue]) dataMap[rowValue][colValue] = []
+
+    dataMap[rowValue][colValue].push(value)
+  })
+
+  const aggregatedData: Record<string, Record<string, number>> = {}
+  const rowTotals: Record<string, number> = {}
+  const columnTotals: Record<string, number> = {}
+  let grandTotal = 0
+
+  const aggregate = (values: number[]): number => {
+    if (values.length === 0) return 0
+    switch (aggregationType) {
+      case 'SUM':
+        return values.reduce((sum, val) => sum + val, 0)
+      case 'COUNT':
+        return values.length
+      case 'AVG':
+        return values.reduce((sum, val) => sum + val, 0) / values.length
+      case 'MIN':
+        return Math.min(...values)
+      case 'MAX':
+        return Math.max(...values)
+      default:
+        return 0
+    }
+  }
+
+  rows.forEach(rowValue => {
+    aggregatedData[rowValue] = {}
+    rowTotals[rowValue] = 0
+
+    columns.forEach(colValue => {
+      const values = dataMap[rowValue]?.[colValue] || []
+      const aggregatedValue = values.length > 0 ? aggregate(values) : 0
+
+      aggregatedData[rowValue][colValue] = aggregatedValue
+      rowTotals[rowValue] += aggregatedValue
+      columnTotals[colValue] = (columnTotals[colValue] || 0) + aggregatedValue
+      grandTotal += aggregatedValue
+    })
+  })
+
+  return {
+    rows: Array.from(rows),
+    columns: Array.from(columns),
+    data: aggregatedData,
+    rowTotals,
+    columnTotals,
+    grandTotal
+  }
+}
+
 interface Report {
   _id: string
   raporAdi: string
   aciklama: string
   icon: string
-  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report'
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report' | 'pivot-report'
   sqlSorgusu: string
   showDate1?: boolean
   showDate2?: boolean
   showSearch?: boolean
   kullanimSayisi: number
   sonKullanimTarihi?: string
+  pivotSettings?: {
+    rowField: string
+    columnField: string
+    valueField: string
+    aggregationType: 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX'
+    showRowTotals: boolean
+    showColumnTotals: boolean
+    showGrandTotal: boolean
+  }
 }
 
 export function ReportExecute() {
@@ -467,36 +559,122 @@ export function ReportExecute() {
       {/* Results */}
       {results.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
-          <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  {Object.keys(currentResults[0]).map((key) => (
-                    <th
-                      key={key}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      {key}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {currentResults.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    {Object.values(row).map((value: any, colIndex) => (
-                      <td
-                        key={colIndex}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+          {/* Pivot Rapor Rendering */}
+          {report?.raporTuru === 'pivot-report' && report.pivotSettings ? (() => {
+            const { rowField, columnField, valueField, aggregationType, showRowTotals, showColumnTotals, showGrandTotal } = report.pivotSettings
+
+            try {
+              const pivotData = transformToPivot(results, rowField, columnField, valueField, aggregationType)
+
+              return (
+                <>
+                  <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider bg-gray-100 dark:bg-gray-800">
+                            {rowField}
+                          </th>
+                          {pivotData.columns.map(col => (
+                            <th key={col} className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                              {col}
+                            </th>
+                          ))}
+                          {showRowTotals && (
+                            <th className="px-6 py-3 text-right text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30">
+                              Toplam
+                            </th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {pivotData.rows.map(row => (
+                          <tr key={row} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900">
+                              {row}
+                            </td>
+                            {pivotData.columns.map(col => (
+                              <td key={col} className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-gray-100">
+                                {(pivotData.data[row]?.[col] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                              </td>
+                            ))}
+                            {showRowTotals && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20">
+                                {(pivotData.rowTotals[row] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                        {showColumnTotals && (
+                          <tr className="bg-blue-50 dark:bg-blue-900/30 font-semibold">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              Toplam
+                            </td>
+                            {pivotData.columns.map(col => (
+                              <td key={col} className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-900 dark:text-blue-300">
+                                {(pivotData.columnTotals[col] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                              </td>
+                            ))}
+                            {showGrandTotal && showRowTotals && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-900 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40">
+                                {pivotData.grandTotal.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                              </td>
+                            )}
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                    <p className="text-xs text-blue-800 dark:text-blue-300">
+                      <strong>Pivot Tablo:</strong> {pivotData.rows.length} satır × {pivotData.columns.length} sütun |
+                      Toplama: {aggregationType} |
+                      Toplam: {pivotData.grandTotal.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </>
+              )
+            } catch (error) {
+              console.error('Pivot transformation error:', error)
+              return (
+                <div className="text-center py-8 text-red-500 dark:text-red-400">
+                  Pivot tablo oluşturulamadı. Lütfen rapor tasarımını kontrol edin.
+                </div>
+              )
+            }
+          })() : (
+            /* Normal Tablo Rendering */
+            <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    {Object.keys(currentResults[0]).map((key) => (
+                      <th
+                        key={key}
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider"
                       >
-                        {value !== null && value !== undefined ? String(value) : '-'}
-                      </td>
+                        {key}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {currentResults.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      {Object.values(row).map((value: any, colIndex) => (
+                        <td
+                          key={colIndex}
+                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                        >
+                          {value !== null && value !== undefined ? String(value) : '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">

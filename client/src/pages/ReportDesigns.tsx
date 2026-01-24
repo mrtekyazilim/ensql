@@ -14,7 +14,7 @@ interface Report {
   raporAdi: string
   aciklama: string
   icon: string
-  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report'
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report' | 'pivot-report'
   sqlSorgusu: string
   aktif: boolean
   kullanimSayisi: number
@@ -26,7 +26,8 @@ const REPORT_TYPES = [
   { value: 'dashboard-scalar', label: 'Dashboard - Skalar Değer' },
   { value: 'dashboard-list', label: 'Dashboard - Liste' },
   { value: 'dashboard-pie', label: 'Dashboard - Pasta Grafik' },
-  { value: 'dashboard-chart', label: 'Dashboard - Bar Grafik' }
+  { value: 'dashboard-chart', label: 'Dashboard - Bar Grafik' },
+  { value: 'pivot-report', label: 'Pivot Tablo Raporu' }
 ]
 
 export function ReportDesigns() {

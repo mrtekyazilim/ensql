@@ -6,12 +6,97 @@ import * as LucideIcons from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import config from '../config.js'
 
+interface PivotData {
+  rows: string[]
+  columns: string[]
+  data: Record<string, Record<string, number>>
+  rowTotals: Record<string, number>
+  columnTotals: Record<string, number>
+  grandTotal: number
+}
+
+// Pivot transformation function
+function transformToPivot(
+  rawData: any[],
+  rowField: string,
+  columnField: string,
+  valueField: string,
+  aggregationType: 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX'
+): PivotData {
+  const rows = new Set<string>()
+  const columns = new Set<string>()
+  const dataMap: Record<string, Record<string, number[]>> = {}
+
+  // First pass: collect all unique rows and columns, group values
+  rawData.forEach(row => {
+    const rowValue = String(row[rowField] || '')
+    const colValue = String(row[columnField] || '')
+    const value = Number(row[valueField]) || 0
+
+    rows.add(rowValue)
+    columns.add(colValue)
+
+    if (!dataMap[rowValue]) dataMap[rowValue] = {}
+    if (!dataMap[rowValue][colValue]) dataMap[rowValue][colValue] = []
+
+    dataMap[rowValue][colValue].push(value)
+  })
+
+  // Second pass: apply aggregation
+  const aggregatedData: Record<string, Record<string, number>> = {}
+  const rowTotals: Record<string, number> = {}
+  const columnTotals: Record<string, number> = {}
+  let grandTotal = 0
+
+  const aggregate = (values: number[]): number => {
+    if (values.length === 0) return 0
+    switch (aggregationType) {
+      case 'SUM':
+        return values.reduce((sum, val) => sum + val, 0)
+      case 'COUNT':
+        return values.length
+      case 'AVG':
+        return values.reduce((sum, val) => sum + val, 0) / values.length
+      case 'MIN':
+        return Math.min(...values)
+      case 'MAX':
+        return Math.max(...values)
+      default:
+        return 0
+    }
+  }
+
+  rows.forEach(rowValue => {
+    aggregatedData[rowValue] = {}
+    rowTotals[rowValue] = 0
+
+    columns.forEach(colValue => {
+      const values = dataMap[rowValue]?.[colValue] || []
+      const aggregatedValue = values.length > 0 ? aggregate(values) : 0
+
+      aggregatedData[rowValue][colValue] = aggregatedValue
+      rowTotals[rowValue] += aggregatedValue
+      columnTotals[colValue] = (columnTotals[colValue] || 0) + aggregatedValue
+      grandTotal += aggregatedValue
+    })
+  })
+
+  return {
+    rows: Array.from(rows),
+    columns: Array.from(columns),
+    data: aggregatedData,
+    rowTotals,
+    columnTotals,
+    grandTotal
+  }
+}
+
 interface ReportFormData {
   raporAdi: string
   aciklama: string
   icon: string
   color: string
-  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report'
+  raporTuru: 'dashboard-scalar' | 'dashboard-list' | 'dashboard-pie' | 'dashboard-chart' | 'normal-report' | 'pivot-report'
   sqlSorgusu: string
   showDate1: boolean
   showDate2: boolean
@@ -20,6 +105,15 @@ interface ReportFormData {
   anahtarKelimeler: string[]
   kategori: string
   ornekSorular: string[]
+  pivotSettings?: {
+    rowField: string
+    columnField: string
+    valueField: string
+    aggregationType: 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX'
+    showRowTotals: boolean
+    showColumnTotals: boolean
+    showGrandTotal: boolean
+  }
 }
 
 interface TestResult {
@@ -31,7 +125,8 @@ const REPORT_TYPES = [
   { value: 'dashboard-scalar', label: 'Dashboard - Skalar Değer' },
   { value: 'dashboard-list', label: 'Dashboard - Liste' },
   { value: 'dashboard-pie', label: 'Dashboard - Pasta Grafik' },
-  { value: 'dashboard-chart', label: 'Dashboard - Bar Grafik' }
+  { value: 'dashboard-chart', label: 'Dashboard - Bar Grafik' },
+  { value: 'pivot-report', label: 'Pivot Tablo Raporu' }
 ]
 
 const POPULAR_ICONS = [
@@ -109,7 +204,16 @@ export function ReportForm() {
     showSearch: false,
     aktif: true,
     anahtarKelimeler: [],
-    kategori: '',
+    kategori: '',,
+    pivotSettings: {
+      rowField: '',
+      columnField: '',
+      valueField: '',
+      aggregationType: 'SUM',
+      showRowTotals: true,
+      showColumnTotals: true,
+      showGrandTotal: true
+    }
     ornekSorular: []
   })
 
@@ -142,7 +246,16 @@ export function ReportForm() {
           aktif: report.aktif !== undefined ? report.aktif : true,
           anahtarKelimeler: report.anahtarKelimeler || [],
           kategori: report.kategori || '',
-          ornekSorular: report.ornekSorular || []
+          ornekSorular: report.ornekSorular || [],
+          pivotSettings: report.pivotSettings || {
+            rowField: '',
+            columnField: '',
+            valueField: '',
+            aggregationType: 'SUM',
+            showRowTotals: true,
+            showColumnTotals: true,
+            showGrandTotal: true
+          }
         })
       }
     } catch (error) {
@@ -589,6 +702,184 @@ export function ReportForm() {
               </div>
             </div>
 
+            {/* Pivot Settings - Only show when raporTuru is 'pivot-report' */}
+            {formData.raporTuru === 'pivot-report' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                  <LucideIcons.Table2 className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+                  Pivot Tablo Ayarları
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Row Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Satır Alanı *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Örn: KategoriAdi"
+                      className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={formData.pivotSettings?.rowField || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          rowField: e.target.value
+                        }
+                      })}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Satırlarda gösterilecek sütun adı
+                    </p>
+                  </div>
+
+                  {/* Column Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sütun Alanı *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Örn: Ay"
+                      className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={formData.pivotSettings?.columnField || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          columnField: e.target.value
+                        }
+                      })}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Sütunlarda gösterilecek sütun adı
+                    </p>
+                  </div>
+
+                  {/* Value Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Değer Alanı *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Örn: SatisTutari"
+                      className="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={formData.pivotSettings?.valueField || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          valueField: e.target.value
+                        }
+                      })}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Toplanacak/hesaplanacak sütun adı
+                    </p>
+                  </div>
+                </div>
+
+                {/* Aggregation Type */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Toplama Türü *
+                  </label>
+                  <select
+                    className="block w-full md:w-1/2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={formData.pivotSettings?.aggregationType || 'SUM'}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      pivotSettings: {
+                        ...formData.pivotSettings!,
+                        aggregationType: e.target.value as 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX'
+                      }
+                    })}
+                  >
+                    <option value="SUM">Toplam (SUM)</option>
+                    <option value="COUNT">Sayım (COUNT)</option>
+                    <option value="AVG">Ortalama (AVG)</option>
+                    <option value="MIN">Minimum (MIN)</option>
+                    <option value="MAX">Maximum (MAX)</option>
+                  </select>
+                </div>
+
+                {/* Display Options */}
+                <div className="space-y-2 mb-4">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      checked={formData.pivotSettings?.showRowTotals ?? true}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          showRowTotals: e.target.checked
+                        }
+                      })}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Satır toplamlarını göster
+                    </span>
+                  </label>
+
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      checked={formData.pivotSettings?.showColumnTotals ?? true}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          showColumnTotals: e.target.checked
+                        }
+                      })}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Sütun toplamlarını göster
+                    </span>
+                  </label>
+
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      checked={formData.pivotSettings?.showGrandTotal ?? true}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        pivotSettings: {
+                          ...formData.pivotSettings!,
+                          showGrandTotal: e.target.checked
+                        }
+                      })}
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Genel toplamı göster
+                    </span>
+                  </label>
+                </div>
+
+                {/* Help Text */}
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                  <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                    <strong>SQL Sorgu Formatı:</strong> Sorgunuz şu 3 sütunu içermelidir:
+                    <code className="px-1 mx-1 bg-yellow-100 dark:bg-yellow-900/40 rounded">{formData.pivotSettings?.rowField || '[SatırAlanı]'}</code>,
+                    <code className="px-1 mx-1 bg-yellow-100 dark:bg-yellow-900/40 rounded">{formData.pivotSettings?.columnField || '[SütunAlanı]'}</code>,
+                    <code className="px-1 mx-1 bg-yellow-100 dark:bg-yellow-900/40 rounded">{formData.pivotSettings?.valueField || '[DeğerAlanı]'}</code>
+                  </p>
+                  <p className="text-xs text-yellow-800 dark:text-yellow-300 mt-2">
+                    <strong>Örnek:</strong> <code className="text-xs bg-yellow-100 dark:bg-yellow-900/40 rounded px-1">SELECT KategoriAdi, Ay, SUM(Tutar) AS Tutar FROM Satislar GROUP BY KategoriAdi, Ay</code>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Parametre Ayarları */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
               <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
@@ -979,6 +1270,126 @@ export function ReportForm() {
                     </div>
                   </div>
                 )
+              })()}
+
+              {/* Pivot Rapor - Pivot Table */}
+              {formData.raporTuru === 'pivot-report' && formData.pivotSettings && (() => {
+                const { rowField, columnField, valueField, aggregationType, showRowTotals, showColumnTotals, showGrandTotal } = formData.pivotSettings
+
+                if (!rowField || !columnField || !valueField || testResults.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      {!rowField || !columnField || !valueField
+                        ? 'Pivot ayarlarını tamamlayın ve sorgu testini çalıştırın'
+                        : 'Sorgu sonucu boş'
+                      }
+                    </div>
+                  )
+                }
+
+                try {
+                  const pivotData = transformToPivot(testResults, rowField, columnField, valueField, aggregationType)
+
+                  if (pivotData.rows.length === 0 || pivotData.columns.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        Pivot tablo oluşturulamadı. Sorgu sonuçlarını kontrol edin.
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                          <tr>
+                            {/* Empty corner cell */}
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider bg-gray-100 dark:bg-gray-800">
+                              {rowField}
+                            </th>
+
+                            {/* Column headers */}
+                            {pivotData.columns.map(col => (
+                              <th key={col} className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                {col}
+                              </th>
+                            ))}
+
+                            {/* Row totals header */}
+                            {showRowTotals && (
+                              <th className="px-6 py-3 text-right text-xs font-medium text-blue-700 dark:text-blue-400 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30">
+                                Toplam
+                              </th>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {/* Data rows */}
+                          {pivotData.rows.map(row => (
+                            <tr key={row} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              {/* Row label */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900">
+                                {row}
+                              </td>
+
+                              {/* Data cells */}
+                              {pivotData.columns.map(col => (
+                                <td key={col} className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-gray-100">
+                                  {(pivotData.data[row]?.[col] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                                </td>
+                              ))}
+
+                              {/* Row total */}
+                              {showRowTotals && (
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20">
+                                  {(pivotData.rowTotals[row] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+
+                          {/* Column totals row */}
+                          {showColumnTotals && (
+                            <tr className="bg-blue-50 dark:bg-blue-900/30 font-semibold">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                Toplam
+                              </td>
+
+                              {pivotData.columns.map(col => (
+                                <td key={col} className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-900 dark:text-blue-300">
+                                  {(pivotData.columnTotals[col] || 0).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                                </td>
+                              ))}
+
+                              {/* Grand total */}
+                              {showGrandTotal && showRowTotals && (
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-900 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40">
+                                  {pivotData.grandTotal.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                                </td>
+                              )}
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                        <p className="text-xs text-green-800 dark:text-green-300">
+                          <strong>Pivot Tablo Özeti:</strong> {pivotData.rows.length} satır × {pivotData.columns.length} sütun |
+                          Toplama: {aggregationType} |
+                          Toplam Değer: {pivotData.grandTotal.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                } catch (error) {
+                  console.error('Pivot transformation error:', error)
+                  return (
+                    <div className="text-center py-8 text-red-500 dark:text-red-400">
+                      Pivot tablo oluşturulurken hata oluştu. Sütun isimlerini kontrol edin.
+                      <br />
+                      <span className="text-sm">Sorgunuz: {rowField}, {columnField}, {valueField} sütunlarını içermeli.</span>
+                    </div>
+                  )
+                }
               })()}
 
               {/* Normal Rapor / Liste - Tablo Görünümü */}
