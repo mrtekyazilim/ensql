@@ -204,7 +204,8 @@ export function ReportForm() {
     showSearch: false,
     aktif: true,
     anahtarKelimeler: [],
-    kategori: '',,
+    kategori: '',
+    ornekSorular: [],
     pivotSettings: {
       rowField: '',
       columnField: '',
@@ -214,7 +215,6 @@ export function ReportForm() {
       showColumnTotals: true,
       showGrandTotal: true
     }
-    ornekSorular: []
   })
 
   useEffect(() => {
